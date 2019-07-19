@@ -1,0 +1,16 @@
+std::vector : 0.00268388
+nostd::Vector : 0.00233378
+
+std::vector :
+Last element = 5
+First element = 1
+isEmpty : 0
+Valid insertion : 1
+Size : 5        Capacity : 7
+
+nostd::Vector:
+Last element = 5
+First element = 1
+isEmpty : 0
+Valid insertion : 1
+Size : 5        Capacity : 10
