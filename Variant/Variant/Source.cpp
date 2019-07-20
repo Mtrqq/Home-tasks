@@ -18,6 +18,6 @@ int main()
 	}
 	std::cout << var.index() << '\t' << var.get<1>();
 	/*Variant<int, double, char> copy_of_var{ var }; Error
-	 it tries to call Variant (T&& i_value) instead of VariantPrivate(const VariantPrivate<Args...>& another)
+	 it tries to call Variant (T&& i_value) instead of Variant(const Variant<Args...>& another)
 	 how to fix it ? */
 }
