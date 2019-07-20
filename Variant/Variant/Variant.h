@@ -45,8 +45,20 @@ public:
 		return mp_impl.get<T>();
 	}
 
+	template <typename T>
+	auto get() const
+	{
+		return mp_impl.get<T>();
+	}
+
 	template <size_t N>
 	auto get()
+	{
+		return mp_impl.get<N>();
+	}
+
+	template <size_t N>
+	auto get() const
 	{
 		return mp_impl.get<N>();
 	}

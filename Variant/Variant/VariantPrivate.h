@@ -6,7 +6,7 @@
 
 // Should I replace bad_typeid for custom exception in get<T> method ?
 // enable_if doesn't works with constexpr function get_type_index, why ?
-// Error " 'reinterpret_cast': cannot convert from 'const char [8]' to 'T *' " while trying to add const get methods
+// Do we actually need const overloads for variant or just remove them?
 
 template <typename ...Args>
 class VariantPrivate
@@ -25,23 +25,37 @@ public:
 
 
 	template <typename T>
-	typename std::enable_if <HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args), T&>::type get()
+	typename std::enable_if <HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args),const T&>::type get() const
 	{
 		if (type_index != -1 && get_type_index<T>() == type_index)
 		{
-			return *reinterpret_cast<T*>(data);
+			return *reinterpret_cast<const T*>(data);
 		}
 		throw std::bad_typeid{}; // change for some custom exception ?
+	}
+
+	template <typename T>
+	typename std::enable_if < HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args), T&>::type get()
+	{
+		const VariantPrivate& self = *this;
+		return const_cast<T&>(self.get<T>());
+	}
+
+	template <size_t N>
+	typename std::enable_if < N < sizeof...(Args), const typename HelperFunctions::NthType<N, Args...>::type&>::type get() const
+	{
+		if (type_index == N)
+		{
+			return *reinterpret_cast<const typename HelperFunctions::NthType<N, Args...>::type*>(data);
+		}
+		throw std::invalid_argument{ "invalid index" };
 	}
 
 	template <size_t N>
 	typename std::enable_if < N < sizeof...(Args), typename HelperFunctions::NthType<N, Args...>::type&>::type get()
 	{
-		if (type_index == N)
-		{
-			return *reinterpret_cast<typename HelperFunctions::NthType<N, Args...>::type*>(data);
-		}
-		throw std::invalid_argument{ "invalid index" };
+		const VariantPrivate& self = *this;
+		return const_cast<typename HelperFunctions::NthType<N, Args...>::type&>(self.get<N>());
 	}
 
 	template<typename T>

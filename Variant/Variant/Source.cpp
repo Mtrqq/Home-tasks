@@ -16,7 +16,9 @@ int main()
 	{
 		std::cout << "OK\n";
 	}
-	std::cout << var.index() << '\t' << var.get<1>();
+	std::cout << var.index() << '\t' << var.get<1>() << std::endl;
+	const Variant<int, double, char> test = '5'; 
+	std::cout << test.get<char>();
 	/*Variant<int, double, char> copy_of_var{ var }; Error
 	 it tries to call Variant (T&& i_value) instead of Variant(const Variant<Args...>& another)
 	 how to fix it ? */
