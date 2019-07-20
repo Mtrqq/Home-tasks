@@ -6,7 +6,6 @@
 
 // Should I replace bad_typeid for custom exception in get<T> method ?
 // enable_if doesn't works with constexpr function get_type_index, why ?
-// Error " 'reinterpret_cast': cannot convert from 'const char [8]' to 'T *' " while trying to add const get methods
 
 template <typename ...Args>
 class VariantPrivate
