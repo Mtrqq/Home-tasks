@@ -20,7 +20,7 @@ public:
 		mp_impl.assign(std::move(i_value));
 	}
 
-	Variant(const Variant& another)
+	Variant(const Variant<Args...>& another)
 	{
 		mp_impl = another.mp_impl;
 	}
@@ -40,13 +40,13 @@ public:
 	}
 
 	template <typename T>
-	T get()
+	auto get()
 	{
-		return mp_impl.get<T>(); // Avoid second copy by std::move() ?
+		return mp_impl.get<T>();
 	}
 
 	template <size_t N>
-	typename NthType<N, Args...>::type get()
+	auto get()
 	{
 		return mp_impl.get<N>();
 	}

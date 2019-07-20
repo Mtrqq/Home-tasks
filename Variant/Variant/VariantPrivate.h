@@ -4,9 +4,9 @@
 
 #include <stdexcept>
 
-// Custom exception ?
-// Move C style array ? 
-// Errors with const get function ?
+// Should I replace bad_typeid for custom exception in get<T> method ?
+// enable_if doesn't works with constexpr function get_type_index, why ?
+// Error " 'reinterpret_cast': cannot convert from 'const char [8]' to 'T *' " while trying to add const get methods
 
 template <typename ...Args>
 class VariantPrivate
@@ -20,8 +20,12 @@ public:
 		type_index = another.type_index;
 	}
 
+	//add move constructor ?
+	// is it correct to use memmove on c style array ?
+
+
 	template <typename T>
-	T get()
+	typename std::enable_if <HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args), T&>::type get()
 	{
 		if (type_index != -1 && get_type_index<T>() == type_index)
 		{
@@ -31,17 +35,17 @@ public:
 	}
 
 	template <size_t N>
-	typename NthType<N, Args...>::type get()
+	typename std::enable_if < N < sizeof...(Args), typename HelperFunctions::NthType<N, Args...>::type&>::type get()
 	{
-		if (N < sizeof...(Args))
+		if (type_index == N)
 		{
-			return *reinterpret_cast<typename NthType<N, Args...>::type*>(data);
+			return *reinterpret_cast<typename HelperFunctions::NthType<N, Args...>::type*>(data);
 		}
 		throw std::invalid_argument{ "invalid index" };
 	}
 
 	template<typename T>
-	void assign(const T& value)
+	typename std::enable_if < HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args), void>::type assign(const T& value)
 	{
 		auto index = get_type_index<T>();
 		if (index != -1)
@@ -53,7 +57,7 @@ public:
 	}
 
 	template<typename T>
-	void assign(T&& value)
+	typename std::enable_if < HelperFunctions::index_of_type<T, Args...>::value < sizeof...(Args), void>::type assign(T&& value)
 	{
 		auto index = get_type_index<T>();
 		if (index != -1)
@@ -69,14 +73,15 @@ public:
 		return type_index;
 	}
 private:
-	char data[size_extractor<Args...>::max_size()];
+	char data[HelperFunctions::size_extractor<Args...>::max_size()];
 	int type_index = -1;
 
 	template<typename T>
-	int get_type_index() const
+	constexpr int get_type_index() const
 	{
-		constexpr auto index = index_of_type<T, Args...>::value;
+		constexpr auto index = HelperFunctions::index_of_type<T, Args...>::value;
 		if (index >= sizeof...(Args)) return -1;
 		return index;
 	}
+
 };
