@@ -12,11 +12,9 @@ template <typename TValueType, size_t X, size_t Y>
 class Matrix
 {
 public:
-	Matrix() = default;
+	explicit Matrix(const TValueType& filler = TValueType{}) { Fill(filler); }
 
 	Matrix(std::initializer_list<std::initializer_list<TValueType>> matrix);
-
-	explicit Matrix(const TValueType& filler) { Fill(filler); }
 
 	template <typename AnotherType>
 	Matrix(const Matrix<AnotherType, X, Y>& another);
@@ -40,9 +38,9 @@ public:
 	Matrix<typename  std::common_type<TValueType, AnotherType>::type, X, Y>
 		EvaluateBinary(const Matrix<AnotherType, X, Y>&, const BinaryFunction& function) const;
 
-	Matrix<TValueType, X, Y> Trasposed() const;
+	Matrix<TValueType, Y, X> Matrix<TValueType, X, Y>::Transposed() const;
 
-	typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, TValueType>::type Determinant() const;
+	//typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Determinant() const;
 
 	const TValueType& At(size_t x_index, size_t y_index) const;
 
@@ -75,7 +73,7 @@ public:
 	auto operator-(const Matrix<AnotherType, X, Y>& anotherMatrix) const;
 
 	template <typename AnotherType>
-	typename std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<typename std::common_type<TValueType,AnotherType>::type,X,Y>>::type
+	typename std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y>>::type
 		operator*(const AnotherType& value) const;
 
 	template <typename TValueType, typename AnotherType, size_t X, size_t Y>
@@ -161,9 +159,9 @@ void Matrix<TValueType, X, Y>::Fill(const TValueType& filler)
 }
 
 template<typename TValueType, size_t X, size_t Y>
-Matrix<TValueType, X, Y> Matrix<TValueType, X, Y>::Trasposed() const
+Matrix<TValueType, Y, X> Matrix<TValueType, X, Y>::Transposed() const
 {
-	Matrix<TValueType, X, Y> resultMatrix;
+	Matrix<TValueType, Y, X> resultMatrix;
 	for (size_t i = 0; i < X; ++i)
 	{
 		for (size_t j = 0; j < Y; ++j)
@@ -190,7 +188,7 @@ Matrix<TValueType, X, Y>& Matrix<TValueType, X, Y>::Apply(const UnaryFunction& f
 
 template<typename TValueType, size_t X, size_t Y>
 template<typename UnaryFunction>
-Matrix<TValueType,X,Y> Matrix<TValueType, X, Y>::EvaluateUnary(const UnaryFunction& function) const
+Matrix<TValueType, X, Y> Matrix<TValueType, X, Y>::EvaluateUnary(const UnaryFunction& function) const
 {
 	Matrix<TValueType, X, Y> result;
 	for (int i = 0; i < X; ++i)
@@ -227,9 +225,9 @@ auto Matrix<TValueType, X, Y>::operator*(const Matrix<AnotherType, N, K>& anothe
 	return ComplexChunksOperation(GetRowWalker<common_type>(), anotherMatrix.GetColumnWalker<common_type>(),
 		[](const std::valarray<common_type>& lhs, const std::valarray<common_type>& rhs)
 		-> common_type
-		{
-			return (lhs * rhs).sum();
-		});
+	{
+		return (lhs * rhs).sum();
+	});
 }
 
 template<typename TValueType, size_t X, size_t Y>
@@ -248,7 +246,7 @@ auto Matrix<TValueType, X, Y>::operator-(const Matrix<AnotherType, X, Y>& anothe
 
 template<typename TValueType, size_t X, size_t Y>
 template<typename AnotherType>
-typename std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y>>::type 
+typename std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y>>::type
 Matrix<TValueType, X, Y>::operator*(const AnotherType& value) const
 {
 	return EvaluateUnary(std::bind(std::multiplies<typename std::common_type<TValueType, AnotherType>::type>{}, std::placeholders::_1, value));
@@ -267,31 +265,43 @@ std::ostream& operator<<(std::ostream& stream, const Matrix<T, N, K>& matrix)
 }
 
 
-template<typename TValueType, size_t X, size_t Y>
-typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, TValueType>::type Matrix<TValueType, X, Y>::Determinant() const
+/*template<typename TValueType, size_t X, size_t Y>
+typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Matrix<TValueType, X, Y>::Determinant() const
 {
-	TValueType L[X][Y], U[X][Y];
+	using resultType = long double;
+	resultType L[X][X], U[X][X];
 	for (size_t i = 0; i < X; ++i)
 	{
-		for (size_t k = 0; k < X; ++k)
+		// U
+		for (size_t k = i; k < X; ++k)
 		{
-			TValueType accumulation{};
+			resultType accumulation{};
 			for (size_t j = 0; j < i; ++j)
 			{
 				accumulation += (L[i][j] * U[j][k]);
 			}
 			U[i][k] = m_container[i][k] - accumulation;
-			if (i == k) L[k][k] = 1;
-			else L[k][i] = (m_container[k][i] - accumulation) / U[i][i];
+		}
+		// L
+		for (size_t k = i; k < X; ++k) {
+			if (i == k)
+			{
+				L[i][i] = 1.0;
+			}
+			else
+			{
+				resultType accumulation{};
+				for (int j = 0; j < i; j++)
+				{
+					accumulation += (L[k][j] * U[j][i]);
+				}
+				L[k][i] = (m_container[k][i] - accumulation) / U[i][i];
+			}
 		}
 	}
-	TValueType result{ 1 };
-	for (int i = 0; i < X; ++i)
-	{
-		result *= (L[i][i] * U[i][i]);
-	}
-	return result;
-}
+	return {};
+}*/
+
 
 template<typename TValueType, size_t X, size_t Y>
 const TValueType& Matrix<TValueType, X, Y>::At(size_t x_index, size_t y_index) const
