@@ -75,9 +75,9 @@ namespace nostd
 	{
 		if (mp_control_block)
 		{
-			--mp_control_block->shared_count;
+			--mp_control_block->shared_ptr_count();
 		}
-		mp_control_block = new RemoteBlock{ i_pointer };
+		mp_control_block = new RemoteBlock<TValueType>{ i_pointer };
 		++mp_control_block->shared_ptr_count();
 	}
 
@@ -86,12 +86,12 @@ namespace nostd
 	{
 		if (mp_control_block && mp_control_block->is_valid())
 		{
-			if (mp_control_block->shared_ptr_count() == 0)
+			if (--mp_control_block->shared_ptr_count() == 0)
 			{
 				mp_control_block->destroyObject();
 				if (mp_control_block->weak_ptr_count() == 0)
 				{
-					delete mp_control_block;
+					mp_control_block->~SharedControlBlockBase();
 				}
 			}
 		}

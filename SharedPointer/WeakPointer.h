@@ -23,7 +23,7 @@ namespace nostd
 		{
 			if (mp_control_block->weak_ptr_count() == 0 &&
 				--mp_control_block->shared_ptr_count() == 0)
-				delete mp_control_block;
+				 mp_control_block->~SharedControlBlockBase()
 		}
 
 		SharedPointer<TValueType> lock()

@@ -46,6 +46,8 @@ namespace nostd
 
 		virtual void destroyObject() = 0;
 
+		virtual ~SharedControlBlockBase() {}
+
 	protected:
 
 		template <typename ...Args>
@@ -54,7 +56,6 @@ namespace nostd
 			m_shared_count{},
 			m_weak_count{} {}
 
-	private:
 		size_t m_shared_count;
 		size_t m_weak_count;
 		TValueType* mp_data;
@@ -68,7 +69,7 @@ namespace nostd
 	{
 		template <typename ...Args>
 		BlindedBlock(Args && ... arguments)
-			:SharedControlBlockBase{ arguments... }
+			:SharedControlBlockBase<TValueType>{ arguments... }
 		{}
 
 		virtual void destroyObject() override
@@ -87,7 +88,7 @@ namespace nostd
 	struct RemoteBlock : public SharedControlBlockBase<TValueType>
 	{
 		RemoteBlock(TValueType* i_pointer)
-			:SharedControlBlockBase{ i_pointer }
+			:SharedControlBlockBase<TValueType>{ i_pointer }
 		{}
 
 		virtual void destroyObject() override
@@ -98,8 +99,9 @@ namespace nostd
 
 		virtual ~RemoteBlock() override
 		{
-			delete this->mp_data;
-			delete this;
+			if (this->mp_data) 
+				delete this->mp_data;
+			::operator delete(this);
 		}
 	};
 }
