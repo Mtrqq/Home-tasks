@@ -1,14 +1,11 @@
 #pragma once
 
+#include <iostream>
+
 namespace nostd
 {
-	/*template<typename TValueType, typename ...Args>
-	SharedPointer<TValueType> make_shared(Args &&... args)
-	{
-		char* p_data_pointer = new char[sizeof(BlindedBlock<TValueType>) + sizeof(TValueType)];
-		new(p_data_pointer) BlindedBlock<TValueType>{args...};
-		return SharedPointer<TValueType>{static_cast<BlindedBlock<TValueType>>(p_data_pointer)};
-	}*/
+	template<typename TValueType>
+	class SharedPointer;
 
 	template <typename TValueType>
 	class SharedControlBlockBase
@@ -52,7 +49,7 @@ namespace nostd
 
 		template <typename ...Args>
 		SharedControlBlockBase(Args && ... arguments)
-			:mp_data{ this + 1 },
+			:mp_data{ new(this + 1)TValueType{std::forward<TValueType>(arguments)...}},
 			m_shared_count{},
 			m_weak_count{} {}
 
@@ -60,8 +57,8 @@ namespace nostd
 		size_t m_weak_count;
 		TValueType* mp_data;
 
-	/*	template<typename TValueType, typename ...Args>
-		friend SharedPointer<TValueType> make_shared(Args &&... args);*/
+		template<typename TValueType, typename ...Args>
+		friend SharedPointer<TValueType> make_shared(Args &&... args);
 	};
 
 	template<typename TValueType>
@@ -74,13 +71,15 @@ namespace nostd
 
 		virtual void destroyObject() override
 		{
+			std::cout << "Object destroyed" << std::endl;
 			this->mp_data->~TValueType();
 			this->mp_data = nullptr;
 		}
 
 		virtual ~BlindedBlock() override
 		{
-			delete[] this;
+			std::cout << "Full Destroy" << std::endl;
+			::operator delete(this);
 		}
 	};
 
@@ -93,12 +92,14 @@ namespace nostd
 
 		virtual void destroyObject() override
 		{
+			std::cout << "Object destroyed" << std::endl;
 			delete this->mp_data;
 			this->mp_data = nullptr;
 		}
 
 		virtual ~RemoteBlock() override
 		{
+			std::cout << "Full Destroy" << std::endl;
 			if (this->mp_data) 
 				delete this->mp_data;
 			::operator delete(this);

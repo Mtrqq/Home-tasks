@@ -1,11 +1,23 @@
 #pragma once
 
 #include "SharedControlBlock.h"
+#include "WeakPointer.h"
 
 #include <utility>
+#include <new>
 
 namespace nostd
 {
+	template<typename TValueType>
+	class SharedPointer;
+
+	template<typename TValueType, typename ...Args>
+	SharedPointer<TValueType> make_shared(Args && ... args)
+	{
+		char* p_data_pointer = new char[sizeof(BlindedBlock<TValueType>) + sizeof(TValueType)];
+		new(p_data_pointer) BlindedBlock<TValueType>(args...);
+		return SharedPointer<TValueType>{reinterpret_cast<BlindedBlock<TValueType>*>(p_data_pointer)};
+	}
 
 	template<typename TValueType>
 	class SharedPointer
@@ -32,13 +44,30 @@ namespace nostd
 			return mp_control_block->get();
 		}
 
+		TValueType& operator*()
+		{
+			return *get();
+		}
+
+		const TValueType& operator*() const
+		{
+			return *get();
+		}
+
 		operator bool() const
+		{
+			return is_valid();
+		}
+
+		bool is_valid() const
 		{
 			return mp_control_block != nullptr &&
 				mp_control_block->get() != nullptr;
 		}
 
-		void reset(TValueType* i_pointer);
+		void reset(TValueType* i_pointer = nullptr);
+
+		void deleteIfRealeased();
 
 		~SharedPointer();
 	private:
@@ -53,8 +82,8 @@ namespace nostd
 		template <typename TValueType>
 		friend class WeakPointer;
 
-		/*template<typename TValueType, typename ...Args>
-		friend SharedPointer<TValueType> make_shared(Args &&... args);*/
+		template<typename TValueType, typename ...Args>
+		friend SharedPointer<TValueType> make_shared(Args &&... args);
 	};
 
 	template<typename TValueType>
@@ -76,9 +105,26 @@ namespace nostd
 		if (mp_control_block)
 		{
 			--mp_control_block->shared_ptr_count();
+			deleteIfRealeased();
 		}
-		mp_control_block = new RemoteBlock<TValueType>{ i_pointer };
-		++mp_control_block->shared_ptr_count();
+		if (i_pointer)
+		{
+			mp_control_block = new RemoteBlock<TValueType>{ i_pointer };
+			++mp_control_block->shared_ptr_count();
+		}
+	}
+
+	template<typename TValueType>
+	void SharedPointer<TValueType>::deleteIfRealeased()
+	{
+		if (mp_control_block->shared_ptr_count() == 0)
+		{
+			mp_control_block->destroyObject();
+			if (mp_control_block->weak_ptr_count() == 0)
+			{
+				mp_control_block->~SharedControlBlockBase();
+			}
+		}
 	}
 
 	template<typename TValueType>
@@ -86,14 +132,8 @@ namespace nostd
 	{
 		if (mp_control_block && mp_control_block->is_valid())
 		{
-			if (--mp_control_block->shared_ptr_count() == 0)
-			{
-				mp_control_block->destroyObject();
-				if (mp_control_block->weak_ptr_count() == 0)
-				{
-					mp_control_block->~SharedControlBlockBase();
-				}
-			}
+			--mp_control_block->shared_ptr_count();
+			deleteIfRealeased();
 		}
 	}
 
