@@ -14,8 +14,7 @@ class MatrixWalker
 public:
 	MatrixWalker(const Matrix<typename traits<Successor>::type, traits<Successor>::X, traits<Successor>::Y>& matrix, size_t index)
 		:matrix{ matrix },
-		walkerIndex{ index }
-	{}
+		walkerIndex{ index } {}
 
 	MatrixWalker(const MatrixWalker& another) :
 		walkerIndex{ another.walkerIndex },
@@ -29,7 +28,7 @@ public:
 
 	bool isValid() const
 	{
-		return walkerIndex < traits<Successor>::mainAttribute && walkerIndex >= 0;
+		return walkerIndex < traits<Successor>::mg_iteration_count && walkerIndex >= 0;
 	}
 protected:
 	const Matrix<typename traits<Successor>::type, traits<Successor>::X, traits<Successor>::Y>& matrix;
@@ -47,10 +46,10 @@ public:
 
 	std::valarray<NeededType> operator*()
 	{
-		std::valarray<NeededType> array(traits<ColumnWalker>::secondaryAttribute);
-		for (size_t i = 0; i < traits<ColumnWalker>::secondaryAttribute; ++i)
+		std::valarray<NeededType> array(traits<ColumnWalker>::mg_token_size);
+		for (size_t i = 0; i < traits<ColumnWalker>::mg_token_size; ++i)
 		{
-			array[i] = this->matrix.At(i, this->walkerIndex);
+			array[i] = static_cast<NeededType>(this->matrix.At(i, this->walkerIndex));
 		}
 		return array;
 	}
@@ -61,8 +60,8 @@ struct traits<ColumnWalker<T, N, K, Needed>>
 {
 	static constexpr size_t X = N;
 	static constexpr size_t Y = K;
-	static constexpr size_t mainAttribute = K;
-	static constexpr size_t secondaryAttribute = N;
+	static constexpr size_t mg_iteration_count = K;
+	static constexpr size_t mg_token_size = N;
 	using type = T;
 	using ValArrayType = Needed;
 };
@@ -76,10 +75,10 @@ public:
 
 	std::valarray<NeededType> operator*() const
 	{
-		std::valarray<NeededType> array(traits<RowWalker>::secondaryAttribute);
-		for (size_t i = 0; i < traits<RowWalker>::secondaryAttribute; ++i)
+		std::valarray<NeededType> array(traits<RowWalker>::mg_token_size);
+		for (size_t i = 0; i < traits<RowWalker>::mg_token_size; ++i)
 		{
-			array[i] = this->matrix.At(this->walkerIndex, i);
+			array[i] = static_cast<NeededType>(this->matrix.At(this->walkerIndex, i));
 		}
 		return array;
 	}
@@ -90,8 +89,8 @@ struct traits<RowWalker<T, N, K, Needed>>
 {
 	static constexpr size_t X = N;
 	static constexpr size_t Y = K;
-	static constexpr size_t mainAttribute = N;
-	static constexpr size_t secondaryAttribute = K;
+	static constexpr size_t mg_iteration_count = N;
+	static constexpr size_t mg_token_size = K;
 	using type = T;
 	using ValArrayType = Needed;
 };

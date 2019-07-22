@@ -1,127 +1,34 @@
 #pragma once
 
 #include "MatrixWalker.h"
+#include "MatrixHelperFunctions.h"
 
 #include <initializer_list>
 #include <type_traits>
-#include <array>
 #include <functional>
-
-template <typename TValueType, size_t X, size_t Y>
-class Matrix;
-
-namespace
-{
-	template <size_t X, size_t Y, size_t N, size_t K,
-		typename MatrixIterator1, typename MatrixIterator2,
-		typename TValueType, typename AnotherType> struct new_matrix
-	{
-		using type = typename std::enable_if < traits<MatrixIterator1>::mainAttribute == traits<MatrixIterator2>::mainAttribute,
-			typename Matrix<typename std::common_type<TValueType, AnotherType>::type, traits<MatrixIterator1>::secondaryAttribute,
-			traits<MatrixIterator2>::secondaryAttribute>>::type;
-	};
-}
-
-template <typename TValueType, size_t X, size_t Y,
-	typename AnotherType, size_t N, size_t K,
-	template <class, size_t, size_t, typename> class Iterator1,
-	template <class, size_t, size_t, typename> class Iterator2,
-	typename ValArrayProccessor>
-	typename new_matrix<X, Y, N, K, Iterator1<TValueType, X, Y, typename std::common_type<TValueType, AnotherType>::type>,
-	Iterator2<AnotherType, N, K, typename std::common_type<TValueType, AnotherType>::type>, TValueType, AnotherType>::type
-	ComplexChunksOperation(Iterator1<TValueType, X, Y, typename std::common_type<TValueType, AnotherType>::type> lhs,
-		Iterator2<AnotherType, N, K, typename std::common_type<TValueType, AnotherType>::type> rhs,
-		ValArrayProccessor function)
-{
-	typename new_matrix<X, Y, N, K, Iterator1<TValueType, X, Y, typename std::common_type<TValueType, AnotherType>::type>,
-		Iterator2<AnotherType, N, K, typename std::common_type<TValueType, AnotherType>::type>,
-		TValueType, AnotherType>::type resultMatrix{};
-	for (size_t x_index{}; lhs.isValid(); ++lhs, ++x_index)
-	{
-		size_t y_index{};
-		for (auto it = rhs; it.isValid(); ++it)
-		{
-			resultMatrix.At(x_index, y_index++) = function(*lhs, *it);
-		}
-	}
-	return resultMatrix;
-}
+#include <array>
 
 template <typename TValueType, size_t X, size_t Y>
 class Matrix
 {
 public:
-	using size_type = size_t;
-
 	Matrix() = default;
 
-	Matrix(std::initializer_list<std::initializer_list<TValueType>> matrix) :container{}
-	{
-		if (matrix.size() != X || (*matrix.begin()).size() != Y)
-			throw std::invalid_argument{ "invalid size of initializer list" };
-		size_t x_index{};
-		for (auto& row : matrix)
-		{
-			size_t y_index{};
-			for (auto& element : row)
-			{
-				container[x_index][y_index++] = std::move(element);
-			}
-			++x_index;
-		}
-	}
+	Matrix(std::initializer_list<std::initializer_list<TValueType>> matrix);
 
-	explicit Matrix(const TValueType& filler)
-	{
-		for (size_t i = 0; i < X; ++i)
-			for (size_t j = 0; j < Y; ++j)
-				container[i][j] = filler;
-	}
+	explicit Matrix(const TValueType& filler) { Fill(filler); }
 
 	template <typename AnotherType>
-	Matrix(const Matrix<AnotherType, X, Y>& another)
-	{
-		for (int i = 0; i < X; ++i)
-			for (int j = 0; j < Y; ++j)
-				container[i][j] = another.container[i][j];
-	}
+	Matrix(const Matrix<AnotherType, X, Y>& another);
 
 	template <typename AnotherType>
-	Matrix(Matrix<AnotherType, X, Y>&& another) noexcept
-	{
-		for (int i = 0; i < X; ++i)
-			for (int j = 0; j < Y; ++j)
-				container[i][j] = std::move(another.container[i][j]);
-	}
+	Matrix(Matrix<AnotherType, X, Y>&& another) noexcept;
 
-	constexpr size_t Width() const
-	{
-		return Y;
-	}
+	constexpr size_t Width() const { return Y; }
 
-	constexpr size_t Height() const
-	{
-		return X;
-	}
+	constexpr size_t Height() const { return X; }
 
-	const TValueType& At(size_type x_index, size_type y_index) const;
-
-	TValueType& At(size_t x_index, size_t y_index)
-	{
-		const Matrix& self = *this;
-		return const_cast<TValueType&>(self.At(x_index, y_index));
-	}
-
-	const TValueType* operator[](size_t x_index) const
-	{
-		return container[x_index];
-	}
-
-	TValueType* operator[](size_t x_index)
-	{
-		const Matrix& self = *this;
-		return const_cast<TValueType*>(self.operator[](x_index));
-	}
+	void Fill(const TValueType& filler);
 
 	template <typename UnaryFunction>
 	Matrix<TValueType, X, Y>& Apply(const UnaryFunction& function);
@@ -132,6 +39,29 @@ public:
 	template <typename BinaryFunction, typename AnotherType>
 	Matrix<typename  std::common_type<TValueType, AnotherType>::type, X, Y>
 		EvaluateBinary(const Matrix<AnotherType, X, Y>&, const BinaryFunction& function) const;
+
+	Matrix<TValueType, X, Y> Trasposed() const;
+
+	typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, TValueType>::type Determinant() const;
+
+	const TValueType& At(size_t x_index, size_t y_index) const;
+
+	TValueType& At(size_t x_index, size_t y_index)
+	{
+		const Matrix& self = *this;
+		return const_cast<TValueType&>(self.At(x_index, y_index));
+	}
+
+	const TValueType* operator[](size_t x_index) const
+	{
+		return m_container[x_index];
+	}
+
+	TValueType* operator[](size_t x_index)
+	{
+		const Matrix& self = *this;
+		return const_cast<TValueType*>(self.operator[](x_index));
+	}
 
 	std::ostream& Print(std::ostream& stream) const;
 
@@ -162,14 +92,87 @@ public:
 	}
 
 	template <typename NeededTypename>
-	RowWalker<TValueType, X, Y, NeededTypename> GetRowWalker(size_t starting_column = 0) const
+	RowWalker<TValueType, X, Y, NeededTypename> GetRowWalker(size_t starting_row = 0) const
 	{
-		return RowWalker<TValueType, X, Y, NeededTypename>{ *this, starting_column };
+		return RowWalker<TValueType, X, Y, NeededTypename>{ *this, starting_row };
 	}
 
 private:
-	TValueType container[X][Y];
+	TValueType m_container[X][Y];
 };
+
+template<typename TValueType, size_t X, size_t Y>
+template<typename AnotherType>
+Matrix<TValueType, X, Y>::Matrix(const Matrix<AnotherType, X, Y>& another)
+{
+	for (int i = 0; i < X; ++i)
+		for (int j = 0; j < Y; ++j)
+			m_container[i][j] = another.m_container[i][j];
+}
+
+template<typename TValueType, size_t X, size_t Y>
+template<typename AnotherType>
+Matrix<TValueType, X, Y>::Matrix(Matrix<AnotherType, X, Y>&& another) noexcept
+	:m_container{}
+{
+	for (int i = 0; i < X; ++i)
+		for (int j = 0; j < Y; ++j)
+			m_container[i][j] = std::move(another.m_container[i][j]);
+}
+
+template<typename TValueType, size_t X, size_t Y>
+Matrix<TValueType, X, Y>::Matrix(std::initializer_list<std::initializer_list<TValueType>> matrix)
+	:m_container{}
+{
+	if (matrix.size() != X || (*matrix.begin()).size() != Y)
+		throw std::invalid_argument{ "invalid size of initializer list" };
+	size_t x_index{};
+	for (auto& row : matrix)
+	{
+		size_t y_index{};
+		for (auto& element : row)
+		{
+			m_container[x_index][y_index++] = std::move(element);
+		}
+		++x_index;
+	}
+}
+
+template<typename TValueType, size_t X, size_t Y>
+std::ostream& Matrix<TValueType, X, Y>::Print(std::ostream& stream) const
+{
+	for (size_t i = 0; i < X; ++i)
+	{
+		for (size_t j = 0; j < Y; ++j)
+		{
+			stream << m_container[i][j] << '\t';
+		}
+		stream << std::endl;
+	}
+	return stream;
+}
+
+template<typename TValueType, size_t X, size_t Y>
+void Matrix<TValueType, X, Y>::Fill(const TValueType& filler)
+{
+	for (size_t i = 0; i < X; ++i)
+		for (size_t j = 0; j < Y; ++j)
+			m_container[i][j] = filler;
+}
+
+template<typename TValueType, size_t X, size_t Y>
+Matrix<TValueType, X, Y> Matrix<TValueType, X, Y>::Trasposed() const
+{
+	Matrix<TValueType, X, Y> resultMatrix;
+	for (size_t i = 0; i < X; ++i)
+	{
+		for (size_t j = 0; j < Y; ++j)
+		{
+			resultMatrix[i][j] = m_container[j][i];
+		}
+	}
+	return resultMatrix;
+}
 
 template<typename TValueType, size_t X, size_t Y>
 template<typename UnaryFunction>
@@ -179,7 +182,7 @@ Matrix<TValueType, X, Y>& Matrix<TValueType, X, Y>::Apply(const UnaryFunction& f
 	{
 		for (int j = 0; j < Y; ++j)
 		{
-			container[i][j] = function(container[i][j]);
+			m_container[i][j] = function(m_container[i][j]);
 		}
 	}
 	return *this;
@@ -194,7 +197,7 @@ Matrix<TValueType,X,Y> Matrix<TValueType, X, Y>::EvaluateUnary(const UnaryFuncti
 	{
 		for (int j = 0; j < Y; ++j)
 		{
-			result[i][j] = function(container[i][j]);
+			result[i][j] = function(m_container[i][j]);
 		}
 	}
 	return result;
@@ -251,30 +254,8 @@ Matrix<TValueType, X, Y>::operator*(const AnotherType& value) const
 	return EvaluateUnary(std::bind(std::multiplies<typename std::common_type<TValueType, AnotherType>::type>{}, std::placeholders::_1, value));
 }
 
-template<typename TValueType, size_t X, size_t Y>
-const TValueType& Matrix<TValueType, X, Y>::At(size_type x_index, size_type y_index) const
-{
-	if (x_index < X && x_index >= 0 && y_index < Y && y_index >= 0)
-		return container[x_index][y_index];
-	throw std::out_of_range{ "index out of range" };
-}
-
-template<typename TValueType, size_t X, size_t Y>
-std::ostream& Matrix<TValueType, X, Y>::Print(std::ostream& stream) const
-{
-	for (size_t i = 0; i < X; ++i)
-	{
-		for (size_t j = 0; j < Y; ++j)
-		{
-			stream << container[i][j] << '\t';
-		}
-		stream << std::endl;
-	}
-	return stream;
-}
-
 template<typename TValueType, typename AnotherType, size_t X, size_t Y>
-inline std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<TValueType, X, Y>> operator*(const AnotherType& value, const Matrix<TValueType, X, Y>& matrix)
+typename std::enable_if<std::is_arithmetic<AnotherType>::value, Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y>>::type operator*(const AnotherType& value, const Matrix<TValueType, X, Y>& matrix)
 {
 	return matrix * value;
 }
@@ -284,3 +265,39 @@ std::ostream& operator<<(std::ostream& stream, const Matrix<T, N, K>& matrix)
 {
 	return matrix.Print(stream);
 }
+
+
+template<typename TValueType, size_t X, size_t Y>
+typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, TValueType>::type Matrix<TValueType, X, Y>::Determinant() const
+{
+	TValueType L[X][Y], U[X][Y];
+	for (size_t i = 0; i < X; ++i)
+	{
+		for (size_t k = 0; k < X; ++k)
+		{
+			TValueType accumulation{};
+			for (size_t j = 0; j < i; ++j)
+			{
+				accumulation += (L[i][j] * U[j][k]);
+			}
+			U[i][k] = m_container[i][k] - accumulation;
+			if (i == k) L[k][k] = 1;
+			else L[k][i] = (m_container[k][i] - accumulation) / U[i][i];
+		}
+	}
+	TValueType result{ 1 };
+	for (int i = 0; i < X; ++i)
+	{
+		result *= (L[i][i] * U[i][i]);
+	}
+	return result;
+}
+
+template<typename TValueType, size_t X, size_t Y>
+const TValueType& Matrix<TValueType, X, Y>::At(size_t x_index, size_t y_index) const
+{
+	if (x_index < X && x_index >= 0 && y_index < Y && y_index >= 0)
+		return m_container[x_index][y_index];
+	throw std::out_of_range{ "index out of range" };
+}
+
