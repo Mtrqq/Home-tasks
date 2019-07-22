@@ -38,7 +38,9 @@ public:
 	Matrix<typename  std::common_type<TValueType, AnotherType>::type, X, Y>
 		EvaluateBinary(const Matrix<AnotherType, X, Y>&, const BinaryFunction& function) const;
 
-	Matrix<TValueType, Y, X> Matrix<TValueType, X, Y>::Transposed() const;
+	Matrix<TValueType, Y, X> Transposed() const;
+
+	Matrix<TValueType, X, Y> Power(size_t power) const;
 
 	//typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Determinant() const;
 
@@ -105,7 +107,7 @@ Matrix<TValueType, X, Y>::Matrix(const Matrix<AnotherType, X, Y>& another)
 {
 	for (int i = 0; i < X; ++i)
 		for (int j = 0; j < Y; ++j)
-			m_container[i][j] = another.m_container[i][j];
+			m_container[i][j] = static_cast<TValueType>(another[i][j]);
 }
 
 template<typename TValueType, size_t X, size_t Y>
@@ -115,7 +117,7 @@ Matrix<TValueType, X, Y>::Matrix(Matrix<AnotherType, X, Y>&& another) noexcept
 {
 	for (int i = 0; i < X; ++i)
 		for (int j = 0; j < Y; ++j)
-			m_container[i][j] = std::move(another.m_container[i][j]);
+			m_container[i][j] = std::move(static_cast<TValueType>(another[i][i]));
 }
 
 template<typename TValueType, size_t X, size_t Y>
@@ -162,14 +164,25 @@ template<typename TValueType, size_t X, size_t Y>
 Matrix<TValueType, Y, X> Matrix<TValueType, X, Y>::Transposed() const
 {
 	Matrix<TValueType, Y, X> resultMatrix;
-	for (size_t i = 0; i < X; ++i)
+	for (size_t i = 0; i < Y; ++i)
 	{
-		for (size_t j = 0; j < Y; ++j)
+		for (size_t j = 0; j < X; ++j)
 		{
 			resultMatrix[i][j] = m_container[j][i];
 		}
 	}
 	return resultMatrix;
+}
+
+template<typename TValueType, size_t X, size_t Y>
+Matrix<TValueType, X, Y> Matrix<TValueType, X, Y>::Power(size_t power) const
+{
+	Matrix<TValueType, X, Y> result = *this;
+	while (--power)
+	{
+		result = result * (*this);
+	}
+	return result;
 }
 
 template<typename TValueType, size_t X, size_t Y>
@@ -206,12 +219,13 @@ template<typename BinaryFunction, typename AnotherType>
 Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y>
 Matrix<TValueType, X, Y>::EvaluateBinary(const Matrix<AnotherType, X, Y>& another, const BinaryFunction& function) const
 {
-	Matrix<typename std::common_type<TValueType, AnotherType>::type, X, Y> resultMatrix;
+	using common_type = typename std::common_type<TValueType, AnotherType>::type;
+	Matrix<common_type, X, Y> resultMatrix;
 	for (size_t i = 0; i < resultMatrix.Height(); ++i)
 	{
 		for (size_t j = 0; j < resultMatrix.Width(); ++j)
 		{
-			resultMatrix.At(i, j) = function(At(i, j), another.At(i, j));
+			resultMatrix.At(i, j) = static_cast<common_type>(function(At(i, j), another.At(i, j)));
 		}
 	}
 	return resultMatrix;
