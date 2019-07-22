@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <type_traits>
 #include <functional>
+#include <limits>
 #include <array>
 
 template <typename TValueType, size_t X, size_t Y>
@@ -42,7 +43,7 @@ public:
 
 	Matrix<TValueType, X, Y> Power(size_t power) const;
 
-	//typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Determinant() const;
+	typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Determinant() const;
 
 	const TValueType& At(size_t x_index, size_t y_index) const;
 
@@ -279,42 +280,52 @@ std::ostream& operator<<(std::ostream& stream, const Matrix<T, N, K>& matrix)
 }
 
 
-/*template<typename TValueType, size_t X, size_t Y>
+template<typename TValueType, size_t X, size_t Y>
 typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Matrix<TValueType, X, Y>::Determinant() const
 {
 	using resultType = long double;
 	resultType L[X][X], U[X][X];
+	memset(L, 0, sizeof(L));
+	for (int i = 0; i < X; ++i)
+	{
+		for (size_t j = 0; j < Y; ++j)
+		{
+			U[i][j] = m_container[i][j];
+		}
+	}
 	for (size_t i = 0; i < X; ++i)
 	{
-		// U
-		for (size_t k = i; k < X; ++k)
+		for (size_t j = i; j < X; ++j)
 		{
-			resultType accumulation{};
-			for (size_t j = 0; j < i; ++j)
-			{
-				accumulation += (L[i][j] * U[j][k]);
-			}
-			U[i][k] = m_container[i][k] - accumulation;
+			if (U[i][i] == 0.0) return 0;
+			L[j][i] = U[j][i] / U[i][i];
 		}
-		// L
-		for (size_t k = i; k < X; ++k) {
-			if (i == k)
+	}
+
+	for (size_t k = 1; k < X; ++k)
+	{
+		for (size_t i = k - 1; i < X; ++i)
+		{
+			for (size_t j = i; j < X; ++j)
 			{
-				L[i][i] = 1.0;
+				if (U[i][i] == 0.0) return 0;
+			    L[j][i] = U[j][i] / U[i][i];
 			}
-			else
+		}
+
+		for (size_t i = k; i < X; ++i)
+		{
+			for (size_t j = k - 1; j < X; ++j)
 			{
-				resultType accumulation{};
-				for (int j = 0; j < i; j++)
-				{
-					accumulation += (L[k][j] * U[j][i]);
-				}
-				L[k][i] = (m_container[k][i] - accumulation) / U[i][i];
+				U[i][j] = U[i][j] - L[i][k - 1] * U[k - 1][j];
 			}
 		}
 	}
-	return {};
-}*/
+	resultType result{ 1.0 };
+	for (size_t i = 0; i < X; ++i)
+		result *= L[i][i] * U[i][i];
+	return result;
+}
 
 
 template<typename TValueType, size_t X, size_t Y>
