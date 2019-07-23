@@ -29,6 +29,14 @@ namespace nostd
 
 		SharedPointer(const SharedPointer &another);
 
+		SharedPointer(SharedPointer&& another);
+
+		SharedPointer(const WeakPointer<TValueType>&);
+
+		SharedPointer& operator=(const SharedPointer& another);
+
+		SharedPointer& operator=(SharedPointer&& another);
+
 		size_t uses_count() const
 		{
 			return mp_control_block ? mp_control_block->shared_ptr_count() : 0;
@@ -61,11 +69,17 @@ namespace nostd
 
 		bool is_valid() const
 		{
-			return mp_control_block != nullptr &&
-				mp_control_block->get() != nullptr;
+			return mp_control_block != nullptr && mp_control_block->is_valid();
 		}
 
 		void reset(TValueType* i_pointer = nullptr);
+
+		void swap(SharedPointer& another)
+		{
+			auto* tmp = std::move(another.mp_control_block);
+			another.mp_control_block = std::move(mp_control_block);
+			mp_control_block = std::move(tmp);
+		}
 
 		void deleteIfRealeased();
 
@@ -95,8 +109,42 @@ namespace nostd
 	template<typename TValueType>
 	SharedPointer<TValueType>::SharedPointer(const SharedPointer & another)
 	{
+		operator=(another);
+	}
+
+	template<typename TValueType>
+	SharedPointer<TValueType>::SharedPointer(SharedPointer&& another)
+	{
+		operator=(another);
+	}
+
+	template<typename TValueType>
+	SharedPointer<TValueType>::SharedPointer(const WeakPointer<TValueType>&another)
+	{
 		mp_control_block = another.mp_control_block;
 		++mp_control_block->shared_ptr_count();
+	}
+
+	template<typename TValueType>
+	SharedPointer<TValueType>& SharedPointer<TValueType>::operator=(const SharedPointer<TValueType>& another)
+	{
+		if (this != &another)
+		{
+			mp_control_block = another.mp_control_block;
+			++mp_control_block->shared_ptr_count();
+		}
+		return *this;
+	}
+
+	template<typename TValueType>
+	SharedPointer<TValueType>& SharedPointer<TValueType>::operator=(SharedPointer<TValueType>&& another)
+	{
+		if (this != &another)
+		{
+			mp_control_block = std::move(another.mp_control_block);
+			another.mp_control_block = nullptr;
+		}
+		return *this;
 	}
 
 	template<typename TValueType>

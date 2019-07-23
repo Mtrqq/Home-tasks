@@ -16,23 +16,35 @@ namespace nostd
 		WeakPointer(): mp_control_block{nullptr}{}
 
 		WeakPointer(const SharedPointer<TValueType> &shared)
-			:mp_control_block{shared.mp_control_block}
 		{
-			++mp_control_block->weak_ptr_count();
+			changeControlBlock(shared);
 		}
 
 		WeakPointer(const WeakPointer<TValueType>& weak)
-			:mp_control_block{ weak.mp_control_block }
 		{
-			++mp_control_block->weak_ptr_count();
+			changeControlBlock(weak);
 		}
 
 		WeakPointer& operator=(const SharedPointer<TValueType>& shared)
 		{
-			--mp_control_block->weak_ptr_count();
-			deleteIfRealeased();
-			mp_control_block = shared.mp_control_block;
-			++mp_control_block->weak_ptr_count();
+			if (mp_control_block)
+			{
+				--mp_control_block->weak_ptr_count();
+				deleteIfRealeased();
+			}
+			changeControlBlock(shared);
+			return *this;
+		}
+
+		WeakPointer& operator=(const WeakPointer<TValueType>& weak)
+		{
+			if (mp_control_block)
+			{
+				--mp_control_block->weak_ptr_count();
+				deleteIfRealeased();
+			}
+			changeControlBlock(weak);
+			return *this;
 		}
 
 		~WeakPointer()
@@ -46,12 +58,12 @@ namespace nostd
 
 		SharedPointer<TValueType> lock()
 		{
-			return { mp_control_block };
+			return SharedPointer<TValueType>{ mp_control_block };
 		}
 
 		bool is_valid()
 		{
-			return mp_control_block->is_valid();
+			return mp_control_block != nullptr && mp_control_block->is_valid();
 		}
 
 		void deleteIfRealeased()
@@ -65,6 +77,21 @@ namespace nostd
 
 	private:
 		SharedControlBlockBase<TValueType>* mp_control_block;
+
+		template <typename BlockOwner>
+		void changeControlBlock(const BlockOwner& owner)
+		{
+			if (mp_control_block)
+			{
+				--mp_control_block->weak_ptr_count();
+				deleteIfRealeased();
+			}
+			if (owner.mp_control_block)
+			{
+				mp_control_block = owner.mp_control_block;
+				++mp_control_block->weak_ptr_count();
+			}
+		}
 	};
 
 }

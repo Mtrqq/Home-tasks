@@ -5,7 +5,7 @@
 
 int main()
 {
-	nostd::SharedPointer<int> s = nostd::make_shared<int>(1);
+	nostd::SharedPointer<int> s = nostd::make_shared<int>(123456789);
 	std::vector<nostd::SharedPointer<int>> vec;
 	vec.reserve(100);
 	for (int i = 0; i < 100; ++i)

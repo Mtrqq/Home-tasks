@@ -81,6 +81,7 @@ namespace nostd
 			std::cout << "Full Destroy" << std::endl;
 			::operator delete(this);
 		}
+
 	};
 
 	template<typename TValueType>
