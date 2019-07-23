@@ -92,6 +92,9 @@ namespace nostd
 				++mp_control_block->weak_ptr_count();
 			}
 		}
+
+		template <typename TValueType>
+		friend class SharedPointer;
 	};
 
 }

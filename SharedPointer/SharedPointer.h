@@ -93,6 +93,16 @@ namespace nostd
 			++mp_control_block->shared_ptr_count();
 		}
 
+		template <typename BlockOwner>
+		void changeControlBlock(const BlockOwner& owner)
+		{
+			if (owner.mp_control_block)
+			{
+				mp_control_block = owner.mp_control_block;
+				++mp_control_block->shared_ptr_count();
+			}
+		}
+
 		template <typename TValueType>
 		friend class WeakPointer;
 
@@ -108,18 +118,21 @@ namespace nostd
 
 	template<typename TValueType>
 	SharedPointer<TValueType>::SharedPointer(const SharedPointer & another)
+		:mp_control_block{nullptr}
 	{
-		operator=(another);
+		changeControlBlock(another);
 	}
 
 	template<typename TValueType>
 	SharedPointer<TValueType>::SharedPointer(SharedPointer&& another)
+		:mp_control_block{ nullptr }
 	{
 		operator=(another);
 	}
 
 	template<typename TValueType>
 	SharedPointer<TValueType>::SharedPointer(const WeakPointer<TValueType>&another)
+		:mp_control_block{ nullptr }
 	{
 		mp_control_block = another.mp_control_block;
 		++mp_control_block->shared_ptr_count();
@@ -128,10 +141,14 @@ namespace nostd
 	template<typename TValueType>
 	SharedPointer<TValueType>& SharedPointer<TValueType>::operator=(const SharedPointer<TValueType>& another)
 	{
+		if (mp_control_block)
+		{
+			--mp_control_block->shared_ptr_count();
+			deleteIfRealeased();
+		}
 		if (this != &another)
 		{
-			mp_control_block = another.mp_control_block;
-			++mp_control_block->shared_ptr_count();
+			changeControlBlock(another);
 		}
 		return *this;
 	}
@@ -139,6 +156,11 @@ namespace nostd
 	template<typename TValueType>
 	SharedPointer<TValueType>& SharedPointer<TValueType>::operator=(SharedPointer<TValueType>&& another)
 	{
+		if (mp_control_block)
+		{
+			--mp_control_block->shared_ptr_count();
+			deleteIfRealeased();
+		}
 		if (this != &another)
 		{
 			mp_control_block = std::move(another.mp_control_block);
