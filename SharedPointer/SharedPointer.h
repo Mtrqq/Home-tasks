@@ -15,7 +15,7 @@ namespace nostd
 	SharedPointer<TValueType> make_shared(Args && ... args)
 	{
 		char* p_data_pointer = new char[sizeof(BlindedBlock<TValueType>) + sizeof(TValueType)];
-		new(p_data_pointer) BlindedBlock<TValueType>(args...);
+		new(p_data_pointer) BlindedBlock<TValueType>(std::forward<Args>(args)...);
 		return SharedPointer<TValueType>{reinterpret_cast<BlindedBlock<TValueType>*>(p_data_pointer)};
 	}
 

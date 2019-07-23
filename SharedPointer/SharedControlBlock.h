@@ -79,7 +79,7 @@ namespace nostd
 		virtual ~BlindedBlock() override
 		{
 			std::cout << "Full Destroy" << std::endl;
-			::operator delete(this);
+			::operator delete[](this);
 		}
 
 	};
