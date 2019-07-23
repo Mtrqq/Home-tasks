@@ -66,7 +66,7 @@ namespace nostd
 	{
 		template <typename ...Args>
 		BlindedBlock(Args && ... arguments)
-			:SharedControlBlockBase<TValueType>{ arguments... }
+			:SharedControlBlockBase<TValueType>{ std::forward<TValueType>(arguments)... }
 		{}
 
 		virtual void destroyObject() override
