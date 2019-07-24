@@ -43,7 +43,8 @@ public:
 
 	Matrix<TValueType, X, Y> Power(size_t power) const;
 
-	typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Determinant() const;
+	template <typename T = std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type >
+	long double Determinant() const;
 
 	const TValueType& At(size_t x_index, size_t y_index) const;
 
@@ -233,6 +234,56 @@ Matrix<TValueType, X, Y>::EvaluateBinary(const Matrix<AnotherType, X, Y>& anothe
 }
 
 template<typename TValueType, size_t X, size_t Y>
+template<typename T>
+long double Matrix<TValueType, X, Y>::Determinant() const
+{
+	{
+		using resultType = long double;
+		resultType L[X][X], U[X][X];
+		memset(L, 0, sizeof(L));
+		for (int i = 0; i < X; ++i)
+		{
+			for (size_t j = 0; j < Y; ++j)
+			{
+				U[i][j] = m_container[i][j];
+			}
+		}
+		for (size_t i = 0; i < X; ++i)
+		{
+			for (size_t j = i; j < X; ++j)
+			{
+				if (U[i][i] == 0.0) return 0;
+				L[j][i] = U[j][i] / U[i][i];
+			}
+		}
+
+		for (size_t k = 1; k < X; ++k)
+		{
+			for (size_t i = k - 1; i < X; ++i)
+			{
+				for (size_t j = i; j < X; ++j)
+				{
+					if (U[i][i] == 0.0) return 0;
+					L[j][i] = U[j][i] / U[i][i];
+				}
+			}
+
+			for (size_t i = k; i < X; ++i)
+			{
+				for (size_t j = k - 1; j < X; ++j)
+				{
+					U[i][j] = U[i][j] - L[i][k - 1] * U[k - 1][j];
+				}
+			}
+		}
+		resultType result{ 1.0 };
+		for (size_t i = 0; i < X; ++i)
+			result *= L[i][i] * U[i][i];
+		return result;
+	}
+}
+
+template<typename TValueType, size_t X, size_t Y>
 template<typename AnotherType, size_t N, size_t K>
 auto Matrix<TValueType, X, Y>::operator*(const Matrix<AnotherType, N, K>& anotherMatrix) const
 {
@@ -278,55 +329,6 @@ std::ostream& operator<<(std::ostream& stream, const Matrix<T, N, K>& matrix)
 {
 	return matrix.Print(stream);
 }
-
-
-template<typename TValueType, size_t X, size_t Y>
-typename std::enable_if<X == Y && std::is_arithmetic<TValueType>::value, long double>::type Matrix<TValueType, X, Y>::Determinant() const
-{
-	using resultType = long double;
-	resultType L[X][X], U[X][X];
-	memset(L, 0, sizeof(L));
-	for (int i = 0; i < X; ++i)
-	{
-		for (size_t j = 0; j < Y; ++j)
-		{
-			U[i][j] = m_container[i][j];
-		}
-	}
-	for (size_t i = 0; i < X; ++i)
-	{
-		for (size_t j = i; j < X; ++j)
-		{
-			if (U[i][i] == 0.0) return 0;
-			L[j][i] = U[j][i] / U[i][i];
-		}
-	}
-
-	for (size_t k = 1; k < X; ++k)
-	{
-		for (size_t i = k - 1; i < X; ++i)
-		{
-			for (size_t j = i; j < X; ++j)
-			{
-				if (U[i][i] == 0.0) return 0;
-			    L[j][i] = U[j][i] / U[i][i];
-			}
-		}
-
-		for (size_t i = k; i < X; ++i)
-		{
-			for (size_t j = k - 1; j < X; ++j)
-			{
-				U[i][j] = U[i][j] - L[i][k - 1] * U[k - 1][j];
-			}
-		}
-	}
-	resultType result{ 1.0 };
-	for (size_t i = 0; i < X; ++i)
-		result *= L[i][i] * U[i][i];
-	return result;
-}
-
 
 template<typename TValueType, size_t X, size_t Y>
 const TValueType& Matrix<TValueType, X, Y>::At(size_t x_index, size_t y_index) const
