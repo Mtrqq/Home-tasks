@@ -2,6 +2,9 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <memory>
+
+std::shared_ptr<int> s;
 
 int main()
 {
@@ -22,4 +25,5 @@ int main()
 	s.reset();
 	std::cout << "Is valid after uses_count = 0 : " << s.is_valid() << std::endl;
 	std::cout << "Shared Pointers Realeased" << std::endl;
+	system("pause");
 }

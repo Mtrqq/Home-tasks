@@ -14,9 +14,9 @@ namespace nostd
 	template<typename TValueType, typename ...Args>
 	SharedPointer<TValueType> make_shared(Args && ... args)
 	{
-		char* p_data_pointer = new char[sizeof(BlindedBlock<TValueType>) + sizeof(TValueType)];
-		new(p_data_pointer) BlindedBlock<TValueType>(std::forward<Args>(args)...);
-		return SharedPointer<TValueType>{reinterpret_cast<BlindedBlock<TValueType>*>(p_data_pointer)};
+		SharedControlBlockBase<TValueType>* p_data_pointer =
+			new BlindedBlock<TValueType>{ std::forward<Args>(args)... };
+		return SharedPointer<TValueType>{p_data_pointer};
 	}
 
 	template<typename TValueType>
@@ -88,10 +88,7 @@ namespace nostd
 		SharedControlBlockBase<TValueType> *mp_control_block;
 
 		SharedPointer(SharedControlBlockBase<TValueType> *block)
-			:mp_control_block{ block } 
-		{
-			++mp_control_block->shared_ptr_count();
-		}
+			:mp_control_block{ block } {}
 
 		template <typename BlockOwner>
 		void changeControlBlock(const BlockOwner& owner)
@@ -180,8 +177,8 @@ namespace nostd
 		if (i_pointer)
 		{
 			mp_control_block = new RemoteBlock<TValueType>{ i_pointer };
-			++mp_control_block->shared_ptr_count();
 		}
+		else mp_control_block = nullptr;
 	}
 
 	template<typename TValueType>
@@ -192,7 +189,7 @@ namespace nostd
 			mp_control_block->destroyObject();
 			if (mp_control_block->weak_ptr_count() == 0)
 			{
-				mp_control_block->~SharedControlBlockBase();
+				delete mp_control_block;
 			}
 		}
 	}
