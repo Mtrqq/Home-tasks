@@ -23,7 +23,12 @@ namespace nostd
 
 		KDTree(std::vector < KDPoint<DimensionsCount>> points)
 		{
-			root = CreateBalancedTree(points, 0, points.size());
+			root = CreateBalancedTree(points, 0, static_cast<long>(points.size()));
+		}
+
+		~KDTree()
+		{
+			DestroyTree(root);
 		}
 
 		std::vector<KDPoint<DimensionsCount>> ToVector() const
@@ -36,13 +41,14 @@ namespace nostd
 			return vector;
 		}
 
-		bool HasPoint(const KDPoint<DimensionsCount>& point)
+		bool HasPoint(const KDPoint<DimensionsCount>& point) const
 		{
 			return FindNode(point, root, PointsComparator<DimensionsCount>::GetComparator()) != nullptr;
 		}
 
 		void Insert(const KDPoint<DimensionsCount>& point)
 		{
+			if (!root) root = new Node{ point,nullptr,nullptr };
 			TryInsert(point, root, PointsComparator<DimensionsCount>::GetComparator());
 		}
 
@@ -57,9 +63,9 @@ namespace nostd
 			ForeachHelper(function, root);
 		}
 
-		KDPoint<DimensionsCount> GetClosestTo(const KDPoint<DimensionsCount>& position);
+		KDPoint<DimensionsCount> GetClosestTo(const KDPoint<DimensionsCount>& position) const;
 
-		std::vector<KDPoint<DimensionsCount>> GetPointsInSection()
+		//std::vector<KDPoint<DimensionsCount>> GetPointsInSection();
 	private:
 		Node* root;
 
@@ -74,11 +80,11 @@ namespace nostd
 		template <typename Proccessor>
 		void ForeachHelper(Proccessor function, Node* currentNode) const;
 
-		Node* GetLargestValue(Node* currentNode);
+		Node* GetLargestValue(Node* currentNode) const;
+
+		void DestroyTree(Node*);
 
 	};
-
-
 
 	// TODO : remove "if" crutch
 	template<size_t DimensionsCount>
@@ -174,10 +180,18 @@ namespace nostd
 	}
 
 	template<size_t DimensionsCount>
-	typename  KDTree<DimensionsCount>::Node* KDTree<DimensionsCount>::GetLargestValue(Node* root)
+	typename  KDTree<DimensionsCount>::Node* KDTree<DimensionsCount>::GetLargestValue(Node* root) const
 	{
 		if (root->right) return GetLargestValue(root->right);
 		else return root;
+	}
+
+	template<size_t DimensionsCount>
+	void KDTree<DimensionsCount>::DestroyTree(Node *node)
+	{
+		if (node->left) DestroyTree(node->left);
+		if (node->right) DestroyTree(node->right);
+		delete node;
 	}
 
 	template<size_t DimensionsCount>
@@ -189,12 +203,13 @@ namespace nostd
 		if (currentNode->right) ForeachHelper(function, currentNode->right);
 	}
 
+	//TODO : remove that scary if
 	template<size_t DimensionsCount>
-	KDPoint<DimensionsCount> KDTree<DimensionsCount>::GetClosestTo(const KDPoint<DimensionsCount>& position)
+	KDPoint<DimensionsCount> KDTree<DimensionsCount>::GetClosestTo(const KDPoint<DimensionsCount>& position) const
 	{
 		if (root == nullptr) throw std::runtime_error{ "KDTree is empty !" };
 		std::stack < std::tuple<Node*, KDPoint<DimensionsCount>, unsigned>> to_visit;
-		to_visit.push(std::make_tuple(root, position, 0));
+		to_visit.push(std::make_tuple(root, position, 0u));
 		KDPoint<DimensionsCount> best_match{ root->data };
 		long double min_distance = position.DistanceTo(best_match);
 		while (!to_visit.empty())
@@ -214,11 +229,11 @@ namespace nostd
 					{
 						KDPoint<DimensionsCount> rightBestPossible = best_possible;
 						rightBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
-						to_visit.push(std::make_tuple(current_node->right, rightBestPossible, (coord_index + 1) % DimensionsCount));
+						to_visit.push(std::make_tuple(current_node->right, rightBestPossible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
 					}
 					if (current_node->left)
 					{
-						to_visit.push(std::make_tuple(current_node->left, best_possible, (coord_index + 1) % DimensionsCount));
+						to_visit.push(std::make_tuple(current_node->left, best_possible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
 					}
 				}
 				else
@@ -227,11 +242,11 @@ namespace nostd
 					{
 						KDPoint<DimensionsCount> leftBestPossible = best_possible;
 						leftBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
-						to_visit.push(std::make_tuple(current_node->left, leftBestPossible, (coord_index + 1) % DimensionsCount));
+						to_visit.push(std::make_tuple(current_node->left, leftBestPossible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
 					}
 					if (current_node->right)
 					{
-						to_visit.push(std::make_tuple(current_node->right, best_possible, (coord_index + 1) % DimensionsCount));
+						to_visit.push(std::make_tuple(current_node->right, best_possible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
 					}
 				}
 			}

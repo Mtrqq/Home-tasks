@@ -1,23 +1,61 @@
 #include "KDTree.h"
 
 #include <iostream>
+#include <iomanip>
+#include <chrono>
+#include <random>
+
+using namespace std::chrono;
+
+void FindNearestTree(const nostd::KDTree<2> &tree, const nostd::KDPoint<2> &to_find)
+{
+	auto start = steady_clock::now();
+	auto p = tree.GetClosestTo(to_find);
+	std::cout << "Tree: " << std::fixed << std::setprecision(10) << duration<double>((steady_clock::now() - start)).count();
+	std::cout << "\nOutput : ";
+	p.Print(std::cout);
+	std::cout << "\n\n";
+}
+
+void FindNearestBruteforce(const std::vector<nostd::KDPoint<2>> &pts,const nostd::KDPoint<2> &to_find)
+{
+	auto start = steady_clock::now();
+	double min{ std::numeric_limits<double>::max() };
+	nostd::KDPoint<2> output{ pts[0] };
+	for (const auto &point : pts)
+	{
+		auto distance = point.DistanceTo(to_find);
+		if (distance < min)
+		{
+			output = point;
+			min = distance;
+		}
+	}
+	std::cout << std::fixed << std::setprecision(10) << "Brute force nearest : " << duration<double>((steady_clock::now() - start)).count();
+	std::cout << "\nOutput : ";
+	output.Print(std::cout);
+	std::cout << "\n\n";
+}
 
 int main()
 {
-	std::vector<nostd::KDPoint<2>> points{ {4,3},{1,5},{7,4},{4,7}, {2,0},{3,7},{6,2},{5,6},{0,1} };
-	nostd::KDTree<2> KD{ points };
-	KD.Insert({ 5,5 });
-	auto vec = KD.ToVector();
-	for (auto p : vec)
+	std::uniform_real_distribution<> u_id(0.0, 100000.0);
+	std::mt19937 generator{ std::random_device{}() };
+	std::vector<nostd::KDPoint<2>> points;
+	points.reserve(1000000);
+	for (int i = 0; i < 1000000; ++i)
 	{
-		p.Print(std::cout);
+		points.push_back({ u_id(generator),u_id(generator) });
 	}
-	std::cout << "\n\nFind {5,5} after insertion : " << KD.HasPoint({ 5,5 }) << std::endl;
-	KD.Delete({ 5,5 });
-	std::cout << "\nFind {5,5} after deletion : " << KD.HasPoint({ 5,5 }) << std::endl;
-	std::cout << "\nClosest point to  {4,3} : ";
-	KD.GetClosestTo({ 4,3 }).Print(std::cout);
-	std::cout << "\nClosest point to  {5,-5} : ";
-	KD.GetClosestTo({ 5,-5 }).Print(std::cout);
+	auto PointToFind = nostd::KDPoint<2>{ u_id(generator),u_id(generator) };
+	nostd::KDTree<2> unbalancedTree;
+	for (const auto &point : points)
+	{
+		unbalancedTree.Insert(point);
+	}
+	std::cout << "Unbalanced ";
+	FindNearestTree(unbalancedTree, PointToFind); // How this could be faster ?
+	FindNearestTree({ points }, PointToFind);
+	FindNearestBruteforce(points, PointToFind);
 	std::cin.get();
 }
