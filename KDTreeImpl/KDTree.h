@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <utility>
-#include <queue>
+#include <stack>
 
 namespace nostd
 {
@@ -58,6 +58,8 @@ namespace nostd
 		}
 
 		KDPoint<DimensionsCount> GetClosestTo(const KDPoint<DimensionsCount>& position);
+
+		std::vector<KDPoint<DimensionsCount>> GetPointsInSection()
 	private:
 		Node* root;
 
@@ -190,17 +192,51 @@ namespace nostd
 	template<size_t DimensionsCount>
 	KDPoint<DimensionsCount> KDTree<DimensionsCount>::GetClosestTo(const KDPoint<DimensionsCount>& position)
 	{
-		/*std::queue < std::pair<Node*, KDPoint<DimensionsCount>> to_visit{ root,  {} };
-		unsigned long long min_distance = std::numeric_limits<unsigned long long>::max();
-		auto path_finder = PointsComparator<DimensionsCount>::GetComparator();
+		if (root == nullptr) throw std::runtime_error{ "KDTree is empty !" };
+		std::stack < std::tuple<Node*, KDPoint<DimensionsCount>, unsigned>> to_visit;
+		to_visit.push(std::make_tuple(root, position, 0));
+		KDPoint<DimensionsCount> best_match{ root->data };
+		long double min_distance = position.DistanceTo(best_match);
 		while (!to_visit.empty())
 		{
-			auto current_node = to_visit.front();
-			to_visit.pop();
-			if (position.DistanceTo)
-			auto isLeft = path_finder(position,
+			auto[current_node, best_possible, coord_index] = to_visit.top();  to_visit.pop();
+			if (position.DistanceTo(best_possible) < min_distance)
+			{
+				auto distance = position.DistanceTo(current_node->data);
+				if (distance == 0) return current_node->data;
+				if (distance < min_distance) {
+					min_distance = distance;
+					best_match = current_node->data;
+				}
+				if (position.CompareDimensionCoordinates(current_node->data, coord_index))
+				{
+					if (current_node->right)
+					{
+						KDPoint<DimensionsCount> rightBestPossible = best_possible;
+						rightBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
+						to_visit.push(std::make_tuple(current_node->right, rightBestPossible, (coord_index + 1) % DimensionsCount));
+					}
+					if (current_node->left)
+					{
+						to_visit.push(std::make_tuple(current_node->left, best_possible, (coord_index + 1) % DimensionsCount));
+					}
+				}
+				else
+				{
+					if (current_node->left)
+					{
+						KDPoint<DimensionsCount> leftBestPossible = best_possible;
+						leftBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
+						to_visit.push(std::make_tuple(current_node->left, leftBestPossible, (coord_index + 1) % DimensionsCount));
+					}
+					if (current_node->right)
+					{
+						to_visit.push(std::make_tuple(current_node->right, best_possible, (coord_index + 1) % DimensionsCount));
+					}
+				}
+			}
 		}
-		return {};*/
+		return best_match;
 	}
 
 }

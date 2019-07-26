@@ -20,7 +20,7 @@ namespace nostd
 
 		const double& GetCoordinate(unsigned index) const;
 
-		double DistanceTo(const KDPoint &);
+		double DistanceTo(const KDPoint &) const;
 
 		bool CompareDimensionCoordinates(const KDPoint &other, unsigned index) const;
 
@@ -75,12 +75,12 @@ namespace nostd
 	}
 
 	template<unsigned DimensionsCount>
-	double KDPoint<DimensionsCount>::DistanceTo(const KDPoint &otherPoint)
+	double KDPoint<DimensionsCount>::DistanceTo(const KDPoint &otherPoint) const
 	{
 		double accumulation{};
 		for (int i = 0; i < DimensionsCount; ++i)
 		{
-			accumulation += std::pow(otherPoint.m_coordinates[i] - m_coordinates[i]);
+			accumulation += std::pow(otherPoint.m_coordinates[i] - m_coordinates[i],2);
 		}
 		return std::sqrt(accumulation);
 	}

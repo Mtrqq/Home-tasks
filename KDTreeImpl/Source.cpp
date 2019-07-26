@@ -14,5 +14,10 @@ int main()
 	}
 	std::cout << "\n\nFind {5,5} after insertion : " << KD.HasPoint({ 5,5 }) << std::endl;
 	KD.Delete({ 5,5 });
-	std::cout << "\nFind {5,5} after deletion : " << KD.HasPoint({ 5,5 });
+	std::cout << "\nFind {5,5} after deletion : " << KD.HasPoint({ 5,5 }) << std::endl;
+	std::cout << "\nClosest point to  {4,3} : ";
+	KD.GetClosestTo({ 4,3 }).Print(std::cout);
+	std::cout << "\nClosest point to  {5,-5} : ";
+	KD.GetClosestTo({ 5,-5 }).Print(std::cout);
+	std::cin.get();
 }
