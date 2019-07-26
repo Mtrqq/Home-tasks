@@ -65,6 +65,12 @@ namespace nostd
 
 		KDPoint<DimensionsCount> GetClosestTo(const KDPoint<DimensionsCount>& position) const;
 
+		Node* NearestNeighbor(const KDPoint<DimensionsCount>& destination,
+							  Node* currentBranch,
+							  Node* best,
+							  double best_distance,
+							  unsigned dimensionIndex) const;
+
 		//std::vector<KDPoint<DimensionsCount>> GetPointsInSection();
 	private:
 		Node* root;
@@ -85,6 +91,86 @@ namespace nostd
 		void DestroyTree(Node*);
 
 	};
+
+	template<size_t DimensionsCount>
+	KDPoint<DimensionsCount> KDTree<DimensionsCount>::GetClosestTo(const KDPoint<DimensionsCount>& position) const
+	{
+		if (!root) throw std::runtime_error{ "Tree is empty, unable to start searching" };
+		return NearestNeighbor(position, root, root, position.SquareDistance(root->data), 0)->data;
+	}
+
+	template<size_t DimensionsCount>
+	typename KDTree<DimensionsCount>::Node* 
+		KDTree<DimensionsCount>::NearestNeighbor(const KDPoint<DimensionsCount>& destination,
+												 Node * currentBranch, 
+												 Node * best, 
+												 double best_distance, 
+												 unsigned dimensionIndex) const
+	{
+		if (!currentBranch) return nullptr;
+
+		KDPoint<DimensionsCount> current_point = currentBranch->data;
+
+		auto distance = current_point.SquareDistance(destination);
+		auto offset = current_point.GetCoordinate(dimensionIndex) - destination.GetCoordinate(dimensionIndex);
+
+		Node* local_best = best;
+		double local_best_distance = best_distance;
+
+		if (distance < best_distance)
+		{
+			local_best = currentBranch;
+			local_best_distance = distance;
+		}
+
+		Node* best_possible, *other;
+
+		if (offset > 0)
+		{
+			best_possible = currentBranch->left;
+			other = currentBranch->right;
+		}
+		else
+		{
+			best_possible = currentBranch->right;
+			other = currentBranch->left;
+		}
+
+		dimensionIndex = (dimensionIndex + 1) % DimensionsCount;
+
+		auto next_best = NearestNeighbor(destination, best_possible, local_best, local_best_distance, dimensionIndex);
+		
+		if (next_best != nullptr)
+		{
+			double distance = destination.SquareDistance(next_best->data);
+
+			if (distance < local_best_distance)
+			{
+				local_best_distance = distance;
+				local_best = next_best;
+			}
+		}
+
+		if (offset * offset < local_best_distance)
+		{
+			next_best = NearestNeighbor(destination, other, local_best, local_best_distance, dimensionIndex);
+
+			if (next_best != nullptr)
+			{
+				double distance = destination.SquareDistance(next_best->data);
+
+				if (distance < local_best_distance)
+				{
+					local_best_distance = distance;
+					local_best = next_best;
+				}
+			}
+		}
+
+		return local_best;
+	}
+
+
 
 	// TODO : remove "if" crutch
 	template<size_t DimensionsCount>
@@ -201,57 +287,6 @@ namespace nostd
 		if (currentNode->left) ForeachHelper(function, currentNode->left);
 		function(currentNode->data);
 		if (currentNode->right) ForeachHelper(function, currentNode->right);
-	}
-
-	//TODO : remove that scary if
-	template<size_t DimensionsCount>
-	KDPoint<DimensionsCount> KDTree<DimensionsCount>::GetClosestTo(const KDPoint<DimensionsCount>& position) const
-	{
-		if (root == nullptr) throw std::runtime_error{ "KDTree is empty !" };
-		std::stack < std::tuple<Node*, KDPoint<DimensionsCount>, unsigned>> to_visit;
-		to_visit.push(std::make_tuple(root, position, 0u));
-		KDPoint<DimensionsCount> best_match{ root->data };
-		long double min_distance = position.DistanceTo(best_match);
-		while (!to_visit.empty())
-		{
-			auto[current_node, best_possible, coord_index] = to_visit.top();  to_visit.pop();
-			if (position.DistanceTo(best_possible) < min_distance)
-			{
-				auto distance = position.DistanceTo(current_node->data);
-				if (distance == 0) return current_node->data;
-				if (distance < min_distance) {
-					min_distance = distance;
-					best_match = current_node->data;
-				}
-				if (position.CompareDimensionCoordinates(current_node->data, coord_index))
-				{
-					if (current_node->right)
-					{
-						KDPoint<DimensionsCount> rightBestPossible = best_possible;
-						rightBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
-						to_visit.push(std::make_tuple(current_node->right, rightBestPossible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
-					}
-					if (current_node->left)
-					{
-						to_visit.push(std::make_tuple(current_node->left, best_possible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
-					}
-				}
-				else
-				{
-					if (current_node->left)
-					{
-						KDPoint<DimensionsCount> leftBestPossible = best_possible;
-						leftBestPossible.GetCoordinate(coord_index) = current_node->data.GetCoordinate(coord_index);
-						to_visit.push(std::make_tuple(current_node->left, leftBestPossible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
-					}
-					if (current_node->right)
-					{
-						to_visit.push(std::make_tuple(current_node->right, best_possible, static_cast<unsigned>((coord_index + 1) % DimensionsCount)));
-					}
-				}
-			}
-		}
-		return best_match;
 	}
 
 }

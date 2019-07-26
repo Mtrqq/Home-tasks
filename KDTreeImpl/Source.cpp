@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <chrono>
 #include <random>
-#include <cassert>
 
 using namespace std::chrono;
 
@@ -49,22 +48,21 @@ int main()
 	}
 
 	double first{}, second{}, third{};
-	unsigned testsCount{ 10 };
-	for (int i = 0; i < testsCount; ++i)
+	unsigned testsCount{ 1000 };
+	for (unsigned i = 0; i < testsCount; ++i)
 	{
 		auto PointToFind = nostd::KDPoint<3>{ u_id(generator),u_id(generator),  u_id(generator) };
 		auto p1 = FindNearestTree(unbalancedTree, PointToFind); // How this could be faster ?
 		auto p2 = FindNearestTree(balancedTree, PointToFind);
 		auto p3 = FindNearestBruteforce(points, PointToFind);
-		//assert(p1.second == p2.second && p1.second == p3.second);
 		first += p1.first;
 		second += p2.first;
 		third += p3.first;
 	}
 	std::cout.setf(std::ios::fixed);
 	std::cout << "Average calculations speed (s)\n\n"
-		<< "Unbalanced tree : " << std::setprecision(10) <<  first / testsCount << std::endl
-		<< "Balanced tree : " << std::setprecision(10) << second / testsCount << std::endl
-		<< "Brute force : " << std::setprecision(10) << third / testsCount;
+		<< "Unbalanced tree : " << std::setprecision(10) <<  first << std::endl
+		<< "Balanced tree : " << std::setprecision(10) << second << std::endl
+		<< "Brute force : " << std::setprecision(10) << third;
 	std::cin.get();
 }

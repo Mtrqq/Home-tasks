@@ -22,10 +22,11 @@ namespace nostd
 
 		double DistanceTo(const KDPoint &) const;
 
+		double SquareDistance(const KDPoint &) const;
+
 		bool CompareDimensionCoordinates(const KDPoint &other, unsigned index) const;
 
 		void SetValues(std::initializer_list<double> i_init_list);
-
 
 		std::ostream& Print(std::ostream& stream) const;
 
@@ -77,12 +78,18 @@ namespace nostd
 	template<unsigned DimensionsCount>
 	double KDPoint<DimensionsCount>::DistanceTo(const KDPoint &otherPoint) const
 	{
+		return std::sqrt(SquareDistance(otherPoint));
+	}
+
+	template<unsigned DimensionsCount>
+	inline double KDPoint<DimensionsCount>::SquareDistance(const KDPoint &otherPoint) const
+	{
 		double accumulation{};
 		for (int i = 0; i < DimensionsCount; ++i)
 		{
-			accumulation += std::pow(otherPoint.m_coordinates[i] - m_coordinates[i],2);
+			accumulation += std::pow(otherPoint.m_coordinates[i] - m_coordinates[i], 2);
 		}
-		return std::sqrt(accumulation);
+		return accumulation;
 	}
 
 	template<unsigned DimensionsCount>
