@@ -2,7 +2,6 @@
 
 #include <initializer_list>
 #include <iomanip>
-#include <iostream>
 #include <cstring>
 #include <utility>
 #include <cmath>
@@ -17,9 +16,6 @@ namespace nostd
 		KDPoint();
 		KDPoint(std::initializer_list<double> i_init_list);
 
-		/*template <typename ...Args>
-		KDPoint(Args && ...i_args);*/
-
 		double& GetCoordinate(unsigned index);
 
 		const double& GetCoordinate(unsigned index) const;
@@ -30,29 +26,28 @@ namespace nostd
 
 		void SetValues(std::initializer_list<double> i_init_list);
 
+
 		std::ostream& Print(std::ostream& stream) const;
 
-		friend std::ostream& operator<<(std::ostream& stream,const KDPoint &out);
+		bool operator==(const KDPoint& other)
+		{
+			for (int i = 0; i < DimensionsCount; ++i)
+			{
+				if (m_coordinates[i] != other.m_coordinates[i])
+					return false;
+			}
+			return true;
+		}
+
+		bool operator!=(const KDPoint& other)
+		{
+			return !(*this == other);
+		}
 
 	private:
 		double m_coordinates[DimensionsCount];
 
-		/*template <typename CurrentType,typename ... Args>
-		void extractValues(unsigned i_index, CurrentType && ,Args &&... i_args);
-
-		template<typename CurrentType, typename ...Args>
-		void extractValues(unsigned i_index, CurrentType &&);*/
 	};
-
-	//template<unsigned DimensionsCount>
-	//template<typename ...Args>
-	//KDPoint<DimensionsCount>::KDPoint(Args && ...i_args)
-	//{
-	//	std::cout << sizeof...(Args) << '\n';
-	//	std::cout << DimensionsCount;
-	//	//static_assert(sizeof...(Args) == DimensionsCount);
-	//	extractValues(0, std::forward<Args>(i_args)...);
-	//}
 
 	template<unsigned DimensionsCount>
 	KDPoint<DimensionsCount>::KDPoint()
@@ -104,7 +99,7 @@ namespace nostd
 		size_t current_index{};
 		for (auto &element : i_init_list)
 		{
-			m_coordinates[current_index] = std::move(element);
+			m_coordinates[current_index++] = std::move(element);
 		}
 	}
 
@@ -129,32 +124,43 @@ namespace nostd
 		return out.Print(stream);
 	}
 
-	/*template<unsigned DimensionsCount>
-	template<typename CurrentType, typename ...Args>
-	void KDPoint<DimensionsCount>::extractValues(unsigned i_index,CurrentType &&current, Args && ...i_args)
-	{
-		m_coordinates[i_index] = std::forward<CurrentType>(current);
-		extractValues(i_index + 1, std::forward<Args>(i_args)...);
-	}
-
-	template<unsigned DimensionsCount>
-	template<typename CurrentType, typename ...Args>
-	void nostd::KDPoint<DimensionsCount>::extractValues(unsigned i_index, CurrentType && current)
-	{
-		m_coordinates[DimensionsCount - 1] = std::forward<CurrentType>(current);
-	}*/
-
 	template <unsigned DimensionsCount>
-	struct PointsComparator
+	class PointsComparator
 	{
+	public:
+		PointsComparator() = default;
+
+		PointsComparator(unsigned coordinateToCompare)
+			:sortingIndex{coordinateToCompare}
+		{}
+
 		bool operator()(const KDPoint<DimensionsCount> &lhs, const KDPoint<DimensionsCount> &rhs)
 		{
-			auto result = lhs.CompareDimensionCoordinates(rhs, sortingIndex);
+			return  lhs.CompareDimensionCoordinates(rhs, sortingIndex);
+		}
+
+		PointsComparator& operator++()
+		{
 			sortingIndex = (sortingIndex + 1) % DimensionsCount;
-			return result;
+			return *this;
+		}
+
+		unsigned GetCurrentIndex() const
+		{
+			return sortingIndex;
+		}
+
+		static PointsComparator& GetComparator()
+		{
+			mg_comparator.sortingIndex = 0;
+			return mg_comparator;
 		}
 	private:
+		static PointsComparator<DimensionsCount> mg_comparator;
 		unsigned sortingIndex = 0;
 	};
+
+	template <unsigned DimensionsCount>
+	PointsComparator<DimensionsCount> PointsComparator<DimensionsCount>::mg_comparator{};
 
 }
