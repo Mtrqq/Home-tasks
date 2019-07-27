@@ -16,9 +16,8 @@ namespace nostd
 		{}
 
 		ScopedCaller(ScopedCaller&& other) noexcept
-		{
-			m_function = std::move(other.m_function);
-		}
+			:m_function { std::move(other.m_function) }
+		{}
 
 		ScopedCaller(const ScopedCaller &another) = delete;
 
