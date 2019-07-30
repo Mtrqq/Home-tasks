@@ -7,7 +7,7 @@
 
 int main()
 {
-	std::cout << Add("//[**][***]\n2**3***4***1");
+	std::cout << Add("//[**][1]\n2112");
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

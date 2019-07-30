@@ -60,6 +60,12 @@ namespace UnitTest1
 			auto lambda = [] {Add("//[**][***]\n2**3***4***1"); };
 			Assert::ExpectException<std::regex_error>(lambda);
 		}
+
+		TEST_METHOD(Should_Throw_When_Invalid_Input)
+		{
+			auto lambda = [] {Add("//[2][3]\n-12-13-15310"); };
+			Assert::ExpectException<std::invalid_argument>(lambda);
+		}
 	
 
 	};

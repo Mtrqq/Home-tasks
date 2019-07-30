@@ -51,7 +51,7 @@ std::pair<std::regex, unsigned> ExtractDelimiters(const std::string & string)
 
 std::regex ConstructRegexFromDelims(const std::vector<std::string> & strings)
 {
-	static std::string special_characters{ "[\^$.|?*+()" };
+	static std::string special_characters{ "\^$.|?*+()" };
 	std::ostringstream os;
 	auto size = strings.size();
 	for (unsigned i = 0; i < size; ++i)
