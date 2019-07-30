@@ -1,9 +1,12 @@
 #include "KDTree.h"
+#include "KDRectangle.h"
 
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 #include <random>
+
+
 
 using namespace std::chrono;
 
