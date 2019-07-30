@@ -49,7 +49,7 @@ namespace nostd
 	{
 		for (auto &element : m_coordinates)
 		{
-			el = initial_value
+			element = initial_value;
 		}
 	}
 
