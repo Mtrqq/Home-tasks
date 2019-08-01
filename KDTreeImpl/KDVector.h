@@ -11,7 +11,8 @@ namespace nostd
 	{
 	public:
 		KDVector(double initial_value = 0.0);
-		KDVector(const std::initializer_list<double> &init_list);
+		template <typename Container>
+		KDVector(const Container &init_list);
 
 		double Length() const;
 		double DotProduct(const KDVector<DimensionsCount> &other) const;
@@ -54,7 +55,8 @@ namespace nostd
 	}
 
 	template<unsigned DimensionsCount>
-	KDVector<DimensionsCount>::KDVector(const std::initializer_list<double> &init_list)
+	template <typename Container>
+	KDVector<DimensionsCount>::KDVector(const Container &init_list)
 	{
 		unsigned entry_counter{};
 		for (auto &element : init_list)
