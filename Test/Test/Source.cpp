@@ -32,11 +32,10 @@ T ParallelAccumulate(It begin, It end, T accumulator,
 	It walker = begin;
 	for (int i = 0; i < threads_count - 1; ++i)
 	{
-		auto function = [&] {
-			SummatorHelper(walker, (walker + data_for_thread),
-								i_func, values[i * memory_align]); 
+		auto function = [walker, i_func, data_for_thread](T& ref) {
+			SummatorHelper(walker, (walker + data_for_thread), i_func, ref); 
 		};
-		threads.emplace_back(function);
+		threads.emplace_back(function, std::ref(values[i * memory_align]));
 		walker += data_for_thread;
 	}
 	auto function = [&] { SummatorHelper(walker, end, i_func, values.back()); };
@@ -45,6 +44,38 @@ T ParallelAccumulate(It begin, It end, T accumulator,
 		thread.join();
 	return std::accumulate(values.cbegin(), values.cend(), accumulator);
 }
+
+//template <typename It, typename T, typename Proccessor>
+//T ParallelAccumulate(It begin, It end, T accumulator,
+//	Proccessor i_func, int threads_count)
+//{
+//	std::vector<std::thread> threads;
+//	constexpr auto memory_align = 8;
+//	std::vector<T> values(threads_count * memory_align);
+//	threads.reserve(threads_count);
+//	unsigned long long count_of_elements = end - begin;
+//	unsigned long long data_for_thread = count_of_elements / threads_count;
+//	for (int i = 0; i < threads_count - 1; ++i)
+//	{
+//		auto function = [begin, &i_func, &data_for_thread](T& o_val) mutable {
+//			auto local_end = begin + data_for_thread;
+//			T local_accumulator{};
+//			while (begin != local_end)
+//			{
+//				local_accumulator += i_func(*begin);
+//				++begin;
+//			}
+//			o_val = local_accumulator;
+//		};
+//		threads.emplace_back(function, std::ref(values[i * memory_align]));
+//		std::advance(begin, data_for_thread);
+//	}
+//	auto function = [&] { SummatorHelper(begin, end, i_func, values.back()); };
+//	threads.emplace_back(function);
+//	for (int i = 0; i < threads_count; ++i)
+//		threads[i].join();
+//	return std::accumulate(values.cbegin(), values.cend(), accumulator);
+//}
 
 template <typename T, typename Proccessor>
 double ParallelAlgorithmTester(const std::vector<T> &vec,Proccessor function, int count_of_threads)
