@@ -49,7 +49,7 @@ void AtomicStructTest()
 int main()
 {
 	LoggerTest("log.txt","Hello world !");
-	//AtomicStructTest();
+	AtomicStructTest();
 	std::cout << "Done!";
 	std::cin.get();
 }
