@@ -23,9 +23,17 @@ MThreadPool::MThreadPool(unsigned count_of_threads)
 	Log("Threads constructed.");
 }
 
+// Now my ThreadPool waits for threads before destruction BUT :
+// Can i somehow remove that mutex ?
+// What's better simple cycle with sleep or fake mutex ?
 MThreadPool::~MThreadPool()
 {
 	Log("Started thread pool destruction !");
+
+	std::mutex execution_finaliser;
+	std::unique_lock<std::mutex> final_lock{ execution_finaliser };
+	m_finish_indicator.wait(final_lock, [this] {return m_active_threads_count == 0; });
+
 	std::unique_lock<std::mutex> lock{ m_queue_mutex };
 	m_stop_flag = true;
 	lock.unlock();
@@ -46,7 +54,10 @@ void MThreadPool::RunExecution()
 	{
 		std::unique_lock<std::mutex> lock{ m_queue_mutex };
 		if (initialized && m_available_tasks.empty() && m_active_threads_count == 0)
+		{
 			Log("All tasks done.");
+			m_finish_indicator.notify_one();
+		}
 		initialized = true;
 
 		m_notifier.wait(lock, [this] {return m_stop_flag || !m_available_tasks.empty(); });

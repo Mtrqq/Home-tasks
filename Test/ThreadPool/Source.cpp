@@ -7,6 +7,20 @@
 #include <cassert>
 #include <chrono>
 
+template <typename FunctionType>
+std::vector<std::future<double>> GenerateValues(unsigned amount_of_actions, FunctionType function)
+{
+	std::vector<std::future<double>> futures;
+	futures.reserve(amount_of_actions);
+	MThreadPool thread_pool;
+	for (unsigned i = 0; i < amount_of_actions; ++i)
+	{
+		futures.push_back(thread_pool.Execute(function));
+		std::this_thread::sleep_for(std::chrono::milliseconds{ 20 });
+	}
+	return futures;
+}
+
 
 int main()
 {
@@ -16,38 +30,29 @@ int main()
 	std::vector<double> values(10'000'000);
 	std::generate(values.begin(), values.end(), [&] { return u_rd(generator); });
 
-	std::vector<std::future<double>> futures;
-	unsigned count_of_useless_operations{ 20 };
-	futures.reserve(count_of_useless_operations);
+	auto accumulator = [&values]
 	{
-		MThreadPool thread_pool;
-
-		auto accumulator = [&values]
+		double variable{};
+		for (unsigned i = 0; i < 10'000'000; ++i)
 		{
-			double variable{};
-			for (unsigned i = 0; i < 10'000'000; ++i)
-			{
-				variable += std::log10(values[i]);
-			}
-			return variable;
-		};
-
-		for (unsigned i = 0; i < count_of_useless_operations; ++i)
-		{
-			futures.push_back(thread_pool.Execute(accumulator));
+			variable += std::log10(values[i]);
 		}
-		std::vector<double> values;
-		values.reserve(count_of_useless_operations);
-		for (auto & future : futures)
-			values.push_back(future.get());
-		std::this_thread::sleep_for(std::chrono::milliseconds{ 50 });
-		std::cout << "\nValues :\n";
-		std::copy(values.cbegin(), values.cend(), std::ostream_iterator<double>{std::cout, "\n"});
-		for (unsigned i = 1; i < count_of_useless_operations; ++i)
-		{
-			assert(values[i] == values[i - 1]); // Comparing floating point values ?
-		}
-		std::cout << "\nAll values are equal !" << std::endl;
+		return variable;
+	};
+
+	constexpr auto useless_operations_count = 20;
+	auto futures = GenerateValues(useless_operations_count, accumulator);
+	std::vector<double> result;
+	result.reserve(useless_operations_count);
+	for (auto& future : futures)
+		result.push_back(future.get());
+	std::cout << "\nValues :\n";
+	std::copy(result.cbegin(), result.cend(), std::ostream_iterator<double>{std::cout, "\n"});
+	for (unsigned i = 1; i < useless_operations_count; ++i)
+	{
+		assert(result[i] == result[i - 1]); // Comparing floating point values ?
 	}
+	std::cout << "\nAll values are equal !" << std::endl;
+
 	std::cin.get();
 }

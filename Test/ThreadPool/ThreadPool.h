@@ -21,7 +21,7 @@ private:
 	std::vector<std::thread> m_threads;
 	std::queue<std::function<void()>> m_available_tasks;
 	std::mutex m_queue_mutex, m_log_mutex;
-	std::condition_variable m_notifier;
+	std::condition_variable m_notifier, m_finish_indicator;
 
 	bool m_stop_flag{ false };
 	std::atomic<unsigned> m_active_threads_count { 0 };
