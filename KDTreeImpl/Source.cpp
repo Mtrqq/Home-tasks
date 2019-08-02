@@ -34,6 +34,8 @@ std::pair<double, nostd::KDPoint<3>> FindNearestBruteforce(const std::vector<nos
 	return std::make_pair(duration<double>((steady_clock::now() - start)).count(), output);
 }
 
+// TODO : Write perfomance for PointsInSelection
+
 int main()
 {
 	std::uniform_real_distribution<> u_id(0.0, 100000.0);

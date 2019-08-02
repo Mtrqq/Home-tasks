@@ -16,9 +16,9 @@ namespace nostd
 		KDPoint();
 		KDPoint(std::initializer_list<double> i_init_list);
 
-		double& GetCoordinate(unsigned index);
+		double& At(unsigned index);
 
-		const double& GetCoordinate(unsigned index) const;
+		const double& At(unsigned index) const;
 
 		double DistanceTo(const KDPoint &) const;
 
@@ -64,13 +64,13 @@ namespace nostd
 
 
 	template<unsigned DimensionsCount>
-	double & KDPoint<DimensionsCount>::GetCoordinate(unsigned i_index)
+	double & KDPoint<DimensionsCount>::At(unsigned i_index)
 	{
 		return m_coordinates[i_index];
 	}
 
 	template<unsigned DimensionsCount>
-	const double & KDPoint<DimensionsCount>::GetCoordinate(unsigned i_index) const
+	const double & KDPoint<DimensionsCount>::At(unsigned i_index) const
 	{
 		return m_coordinates[i_index];
 	}

@@ -7,7 +7,6 @@
 
 namespace nostd
 {
-
 	template <unsigned DimensionsCount>
 	class KDRectangle
 	{
@@ -35,7 +34,22 @@ namespace nostd
 			return result;
 		}
 
+		bool Contains(const KDPoint<DimensionsCount>& point)
+		{
+			for (unsigned i = 0; i < DimensionsCount; ++i)
+			{
+				if (point.At(i) < first.At(i) || point.At(i) > last.At(i))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
 		bool Overlap(const KDRectangle<DimensionsCount> &other);
+
+		std::pair<KDRectangle<DimensionsCount>, KDRectangle<DimensionsCount>>
+			SplitByAxis(unsigned dimmension, double value);
 
 
 	private:
@@ -80,6 +94,16 @@ namespace nostd
 				return false;
 		}
 		return true;
+	}
+
+	template<unsigned DimensionsCount>
+	std::pair<KDRectangle<DimensionsCount>, KDRectangle<DimensionsCount>> KDRectangle<DimensionsCount>::SplitByAxis(unsigned dimmension, double value)
+	{
+		KDVector<DimensionsCount> right_middle = first;
+		right_middle.At(dimmension) = value;
+		KDVector<DimensionsCount> left_middle = right;
+		left_middle.At(dimmension) = value;
+		return std::make_pair({ first, left_middle }, { right_middle, last });
 	}
 
 	template<unsigned DimensionsCount>

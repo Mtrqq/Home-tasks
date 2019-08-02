@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KDPoint.h"
+#include "KDRectangle.h"
 
 #include <algorithm>
 #include <vector>
@@ -71,7 +72,7 @@ namespace nostd
 							  double best_distance,
 							  unsigned dimensionIndex) const;
 
-		//std::vector<KDPoint<DimensionsCount>> GetPointsInSection();
+		std::vector<KDPoint<DimensionsCount>> GetPointsInSection(const KDRectangle<DimensionsCount> &selection);
 	private:
 		Node* root;
 
@@ -82,6 +83,9 @@ namespace nostd
 		void TryInsert(const KDPoint<DimensionsCount>& point, Node* currentNode, PointsComparator<DimensionsCount>& pathChooser);
 
 		Node* TryDelete(const KDPoint<DimensionsCount>& point, Node* currentNode, PointsComparator<DimensionsCount>& pathChooser);
+
+		void SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, KDRectangle<DimensionsCount> current_selection,
+									std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned);
 
 		template <typename Proccessor>
 		void ForeachHelper(Proccessor function, Node* currentNode) const;
@@ -112,7 +116,7 @@ namespace nostd
 		KDPoint<DimensionsCount> current_point = currentBranch->data;
 
 		auto distance = current_point.SquareDistance(destination);
-		auto offset = current_point.GetCoordinate(dimensionIndex) - destination.GetCoordinate(dimensionIndex);
+		auto offset = current_point.At(dimensionIndex) - destination.At(dimensionIndex);
 
 		Node* local_best = best;
 		double local_best_distance = best_distance;
@@ -168,6 +172,16 @@ namespace nostd
 		}
 
 		return local_best;
+	}
+
+	template<size_t DimensionsCount>
+	std::vector<KDPoint<DimensionsCount>> KDTree<DimensionsCount>::GetPointsInSection(const KDRectangle<DimensionsCount> &selection)
+	{
+		KDRectangle<DimensionsCount> initial_rectangle(KDVector<DimensionsCount>{std::numeric_limits<double>::min()},
+														KDVector<DimensionsCount>{std::numeric_limits<double>::max()});
+		std::vector<KDPoint<DimensionsCount>> result;
+		SelectedPointsGatherer(selection, initial_rectangle, result, root, 0);
+		return result;
 	}
 
 
@@ -263,6 +277,19 @@ namespace nostd
 		}
 
 		return currentNode;
+	}
+
+	template<size_t DimensionsCount>
+	void KDTree<DimensionsCount>::SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, KDRectangle<DimensionsCount> current_selection,
+														 std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned axis )
+	{
+		KDPoint<DimensionsCount> point = current_node->data;
+		if (selection_area.Contains(point)) output.push_back(point);
+		auto [left, right] = current_selection.SplitByAxis(axis, point.At(axis));
+		if (current_node->left && selection_area.Overlap(left)) 
+			SelectedPointsGatherer(selection_area, left, output, current_node->left, (axis + 1) % DimensionsCount);
+		if (current_node->right && selection_area.Overlap(right))
+			SelectedPointsGatherer(selection_area, right, output, current_node->right, (axis + 1) % DimensionsCount);
 	}
 
 	template<size_t DimensionsCount>
