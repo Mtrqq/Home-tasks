@@ -16,8 +16,6 @@ public:
 private:
 	std::string m_file_name;
 
-	static bool FileExists(const std::string &f_name);
-
 	static std::unordered_map<std::string, std::mutex> g_mutex_map;
 };
 

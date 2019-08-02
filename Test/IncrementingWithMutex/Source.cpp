@@ -4,15 +4,16 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
+#include <string>
 
-void LoggerTest(const std::string &appended_text)
+void LoggerTest(const std::string &file_name,const std::string &appended_text)
 {
 	ParallelLogger logger_array[5];
 	std::vector<std::thread> threads;
 	for (int i = 0; i < 5; ++i)
 	{
-		logger_array[i].SetFileName("log.txt");
-		threads.emplace_back(&ParallelLogger::Log, std::ref(logger_array[i]), appended_text);
+		logger_array[i].SetFileName(file_name);
+		threads.emplace_back(&ParallelLogger::Log, std::ref(logger_array[i]), appended_text + std::to_string(i));
 	}
 	for (int i = 0; i < 5; ++i)
 	{
@@ -47,8 +48,8 @@ void AtomicStructTest()
 
 int main()
 {
-	LoggerTest("Hello world !");
-	AtomicStructTest();
+	LoggerTest("log.txt","Hello world !");
+	//AtomicStructTest();
 	std::cout << "Done!";
 	std::cin.get();
 }
