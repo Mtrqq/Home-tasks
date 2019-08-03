@@ -17,13 +17,13 @@ namespace nostd
 		{
 			for (unsigned i = 0; i < DimensionsCount; ++i)
 			{
-				first[i] = lhs.CoordinateAt(i);
-				last[i] = rhs.CoordinateAt(i);
+				first[i] = lhs.At(i);
+				last[i] = rhs.At(i);
 			}
 		}
 
 		KDRectangle(const KDVector<DimensionsCount>& lhs, const KDVector<DimensionsCount>& rhs)
-			:first{ lhs }, last{ rhs } 
+			:first{ lhs }, last{ rhs }
 		{}
 
 		std::vector<KDVector<DimensionsCount>> GetVertices() const
@@ -34,7 +34,7 @@ namespace nostd
 			return result;
 		}
 
-		bool Contains(const KDPoint<DimensionsCount>& point)
+		bool Contains(const KDPoint<DimensionsCount>& point) const
 		{
 			for (unsigned i = 0; i < DimensionsCount; ++i)
 			{
@@ -46,49 +46,47 @@ namespace nostd
 			return true;
 		}
 
-		bool Overlap(const KDRectangle<DimensionsCount> &other);
+		bool Overlap(const KDRectangle<DimensionsCount>& other) const;
 
 		std::pair<KDRectangle<DimensionsCount>, KDRectangle<DimensionsCount>>
-			SplitByAxis(unsigned dimmension, double value);
+			SplitByAxis(unsigned dimmension, double value) const;
 
 
 	private:
 		KDVector<DimensionsCount> first, last;
 
-		void GenerateVertices(std::vector<KDVector<DimensionsCount>> &io_vec,
-						      const KDVector<DimensionsCount> &distances,
-							  KDVector<DimensionsCount> current,
-							  unsigned index = 0);
+		void GenerateVertices(std::vector<KDVector<DimensionsCount>>& io_vec,
+			const KDVector<DimensionsCount>& distances,
+			KDVector<DimensionsCount> current,
+			unsigned index = 0) const;
 
-		std::pair<int, int> GetAxisProjection(const std::vector<KDVector<DimensionsCount>> &vertices,
-											  const KDVector<DimensionsCount> &axis)
+		// SPEED UP WITHOUT MUL
+		std::pair<double, double> GetAxisProjection(const std::vector<KDVector<DimensionsCount>>& vertices, unsigned dimmension) const
 		{
-			auto min = axis.DotProduct(vertices.front());
+			auto min = vertices.front().At(dimmension);
 			auto max = min;
 			for (unsigned i = 1; i < vertices.size(); ++i)
 			{
-				auto actual = axis.DotProduct(vertices[i]);
+				auto actual = vertices[i].At(dimmension);
 				if (actual > max)
 					max = actual;
 				else
 					if (actual < min)
-						min = actual;
+					min = actual;
 			}
 			return std::make_pair(min, max);
 		}
 	};
 
 	template<unsigned DimensionsCount>
-	bool KDRectangle<DimensionsCount>::Overlap(const KDRectangle<DimensionsCount>& other)
+	bool KDRectangle<DimensionsCount>::Overlap(const KDRectangle<DimensionsCount>& other) const
 	{
-		KDVector<DimensionsCount> Axis;
 		auto self_vertices = GetVertices();
 		auto other_vertices = other.GetVertices();
-		for (unsigned i = 0; i < DimensionsCount; ++i)
+		for (unsigned axis = 0; axis < DimensionsCount; ++axis)
 		{
-			Axis.At(i) = 1;
-			auto projection_f = GetAxisProjection(self_vertices, Axis);
-			auto projection_s = GetAxisProjection(other_vertices, Axis);
+			auto projection_f = GetAxisProjection(self_vertices, axis);
+			auto projection_s = GetAxisProjection(other_vertices, axis);
 			if (projection_f.first > projection_s.second ||
 				projection_s.first > projection_f.second)
 				return false;
@@ -97,20 +95,21 @@ namespace nostd
 	}
 
 	template<unsigned DimensionsCount>
-	std::pair<KDRectangle<DimensionsCount>, KDRectangle<DimensionsCount>> KDRectangle<DimensionsCount>::SplitByAxis(unsigned dimmension, double value)
+	std::pair<KDRectangle<DimensionsCount>, KDRectangle<DimensionsCount>> KDRectangle<DimensionsCount>::SplitByAxis(unsigned dimmension, double value) const
 	{
 		KDVector<DimensionsCount> right_middle = first;
 		right_middle.At(dimmension) = value;
-		KDVector<DimensionsCount> left_middle = right;
-		left_middle.At(dimmension) = value;
-		return std::make_pair({ first, left_middle }, { right_middle, last });
+		KDVector<DimensionsCount> left_middle = last;
+		left_middle.At(dimmension) = value - 0.001;
+		return std::make_pair(KDRectangle<DimensionsCount>{ first, left_middle }
+		, KDRectangle<DimensionsCount>{ right_middle, last });
 	}
 
 	template<unsigned DimensionsCount>
 	void KDRectangle<DimensionsCount>::GenerateVertices(std::vector<KDVector<DimensionsCount>>& io_vec,
-														const KDVector<DimensionsCount>& distances, 
-														KDVector<DimensionsCount> current,
-														unsigned index)
+		const KDVector<DimensionsCount>& distances,
+		KDVector<DimensionsCount> current,
+		unsigned index) const
 	{
 		if (index == DimensionsCount)
 		{

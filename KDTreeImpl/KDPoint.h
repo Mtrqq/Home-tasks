@@ -1,6 +1,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <vector>
 #include <iomanip>
 #include <cstring>
 #include <utility>
@@ -15,6 +16,7 @@ namespace nostd
 	public:
 		KDPoint();
 		KDPoint(std::initializer_list<double> i_init_list);
+		KDPoint(std::vector<double> vector);
 
 		double& At(unsigned index);
 
@@ -26,7 +28,8 @@ namespace nostd
 
 		bool CompareDimensionCoordinates(const KDPoint &other, unsigned index) const;
 
-		void SetValues(std::initializer_list<double> i_init_list);
+		template <typename Container>
+		void SetValues(Container i_init_list);
 
 		std::ostream& Print(std::ostream& stream) const;
 
@@ -60,6 +63,12 @@ namespace nostd
 	KDPoint<DimensionsCount>::KDPoint(std::initializer_list<double> i_init_list)
 	{
 		SetValues(std::move(i_init_list));
+	}
+
+	template<unsigned DimensionsCount>
+	KDPoint<DimensionsCount>::KDPoint(std::vector<double> vector)
+	{
+		SetValues(std::move(vector));
 	}
 
 
@@ -99,7 +108,8 @@ namespace nostd
 	}
 
 	template<unsigned DimensionsCount>
-	void KDPoint<DimensionsCount>::SetValues(std::initializer_list<double> i_init_list)
+	template <typename Container>
+	void KDPoint<DimensionsCount>::SetValues(Container i_init_list)
 	{
 		if (i_init_list.size() != DimensionsCount)
 			throw std::invalid_argument{ "Invalid initializer list size" };

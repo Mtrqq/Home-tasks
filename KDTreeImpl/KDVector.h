@@ -34,15 +34,21 @@ namespace nostd
 			return m_coordinates[index];
 		}
 
+		const double& At(unsigned index) const
+		{
+			if (index >= DimensionsCount) throw std::out_of_range{ "vector subscript is out of range" };
+			return m_coordinates[index];
+		}
+
 	private:
 		double m_coordinates[DimensionsCount];
 
 		template <typename Proccessor>
-		KDVector<DimensionsCount> BinaryOperation(const KDVector<DimensionsCount> &i_other,
-			const Proccessor &function);
+		KDVector<DimensionsCount> BinaryOperation(const KDVector<DimensionsCount>& i_other,
+			const Proccessor& function) const;
 
 		template <typename Proccessor>
-		KDVector<DimensionsCount> UnaryOperation(const Proccessor &function);
+		KDVector<DimensionsCount> UnaryOperation(const Proccessor& function) const;
 	};
 
 	template<unsigned DimensionsCount>
@@ -61,7 +67,7 @@ namespace nostd
 		unsigned entry_counter{};
 		for (auto &element : init_list)
 		{
-			m_coordinates[entry_counter++] = init_list;
+			m_coordinates[entry_counter++] = element;
 		}
 	}
 
@@ -79,11 +85,12 @@ namespace nostd
 	template<unsigned DimensionsCount>
 	double KDVector<DimensionsCount>::DotProduct(const KDVector<DimensionsCount>& other) const
 	{
-		KDVector<DimensionsCount> result = *this;
+		double result{};
 		for (unsigned i = 0; i < DimensionsCount; ++i)
 		{
-			result[i] *= other[i];
+			result += m_coordinates[i] * other.At(i);
 		}
+		return result;
 	}
 
 	template<unsigned DimensionsCount>
@@ -119,24 +126,24 @@ namespace nostd
 
 	template<unsigned DimensionsCount>
 	template<typename Proccessor>
-	KDVector<DimensionsCount> KDVector<DimensionsCount>::BinaryOperation(const KDVector<DimensionsCount>& i_other, const Proccessor & function)
+	KDVector<DimensionsCount> KDVector<DimensionsCount>::BinaryOperation(const KDVector<DimensionsCount>& i_other, const Proccessor & function) const
 	{
 		KDVector<DimensionsCount> result;
 		for (unsigned i = 0; i < DimensionsCount; ++i)
 		{
-			result[i] = function(m_coordinates[i], i_other[i]);
+			result.At(i) = function(m_coordinates[i], i_other.At(i));
 		}
 		return result;
 	}
 
 	template<unsigned DimensionsCount>
 	template<typename Proccessor>
-	inline KDVector<DimensionsCount> KDVector<DimensionsCount>::UnaryOperation(const Proccessor & function)
+	KDVector<DimensionsCount> KDVector<DimensionsCount>::UnaryOperation(const Proccessor& function) const
 	{
 		KDVector<DimensionsCount> result;
 		for (unsigned i = 0; i < DimensionsCount; ++i)
 		{
-			result[i] = function(m_coordinates[i]);
+			result.At(i) = function(m_coordinates[i]);
 		}
 		return result;
 	}

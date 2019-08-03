@@ -67,12 +67,12 @@ namespace nostd
 		KDPoint<DimensionsCount> GetClosestTo(const KDPoint<DimensionsCount>& position) const;
 
 		Node* NearestNeighbor(const KDPoint<DimensionsCount>& destination,
-							  Node* currentBranch,
-							  Node* best,
-							  double best_distance,
-							  unsigned dimensionIndex) const;
+			Node* currentBranch,
+			Node* best,
+			double best_distance,
+			unsigned dimensionIndex) const;
 
-		std::vector<KDPoint<DimensionsCount>> GetPointsInSection(const KDRectangle<DimensionsCount> &selection);
+		std::vector<KDPoint<DimensionsCount>> GetPointsInSection(const KDRectangle<DimensionsCount>& selection) const;
 	private:
 		Node* root;
 
@@ -84,8 +84,8 @@ namespace nostd
 
 		Node* TryDelete(const KDPoint<DimensionsCount>& point, Node* currentNode, PointsComparator<DimensionsCount>& pathChooser);
 
-		void SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, KDRectangle<DimensionsCount> current_selection,
-									std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned);
+		void SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, const KDRectangle<DimensionsCount> current_selection,
+			std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned) const;
 
 		template <typename Proccessor>
 		void ForeachHelper(Proccessor function, Node* currentNode) const;
@@ -104,12 +104,12 @@ namespace nostd
 	}
 
 	template<size_t DimensionsCount>
-	typename KDTree<DimensionsCount>::Node* 
+	typename KDTree<DimensionsCount>::Node*
 		KDTree<DimensionsCount>::NearestNeighbor(const KDPoint<DimensionsCount>& destination,
-												 Node * currentBranch, 
-												 Node * best, 
-												 double best_distance, 
-												 unsigned dimensionIndex) const
+			Node* currentBranch,
+			Node* best,
+			double best_distance,
+			unsigned dimensionIndex) const
 	{
 		if (!currentBranch) return nullptr;
 
@@ -127,7 +127,7 @@ namespace nostd
 			local_best_distance = distance;
 		}
 
-		Node* best_possible, *other;
+		Node* best_possible, * other;
 
 		if (offset > 0)
 		{
@@ -143,7 +143,7 @@ namespace nostd
 		dimensionIndex = (dimensionIndex + 1) % DimensionsCount;
 
 		auto next_best = NearestNeighbor(destination, best_possible, local_best, local_best_distance, dimensionIndex);
-		
+
 		if (next_best != nullptr)
 		{
 			double distance = destination.SquareDistance(next_best->data);
@@ -175,10 +175,10 @@ namespace nostd
 	}
 
 	template<size_t DimensionsCount>
-	std::vector<KDPoint<DimensionsCount>> KDTree<DimensionsCount>::GetPointsInSection(const KDRectangle<DimensionsCount> &selection)
+	std::vector<KDPoint<DimensionsCount>> KDTree<DimensionsCount>::GetPointsInSection(const KDRectangle<DimensionsCount>& selection) const
 	{
 		KDRectangle<DimensionsCount> initial_rectangle(KDVector<DimensionsCount>{std::numeric_limits<double>::min()},
-														KDVector<DimensionsCount>{std::numeric_limits<double>::max()});
+			KDVector<DimensionsCount>{std::numeric_limits<double>::max()});
 		std::vector<KDPoint<DimensionsCount>> result;
 		SelectedPointsGatherer(selection, initial_rectangle, result, root, 0);
 		return result;
@@ -269,24 +269,24 @@ namespace nostd
 
 		if (pathChooser(point, currentNode->data))
 		{
-			currentNode->left = TryDelete(point,currentNode->left, ++pathChooser);
+			currentNode->left = TryDelete(point, currentNode->left, ++pathChooser);
 		}
 		else
 		{
-			currentNode->right = TryDelete( point, currentNode->right, ++pathChooser);
+			currentNode->right = TryDelete(point, currentNode->right, ++pathChooser);
 		}
 
 		return currentNode;
 	}
 
 	template<size_t DimensionsCount>
-	void KDTree<DimensionsCount>::SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, KDRectangle<DimensionsCount> current_selection,
-														 std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned axis )
+	void KDTree<DimensionsCount>::SelectedPointsGatherer(const KDRectangle<DimensionsCount>& selection_area, const KDRectangle<DimensionsCount> current_selection,
+		std::vector<KDPoint<DimensionsCount>>& output, Node* current_node, unsigned axis) const
 	{
 		KDPoint<DimensionsCount> point = current_node->data;
 		if (selection_area.Contains(point)) output.push_back(point);
 		auto [left, right] = current_selection.SplitByAxis(axis, point.At(axis));
-		if (current_node->left && selection_area.Overlap(left)) 
+		if (current_node->left && selection_area.Overlap(left))
 			SelectedPointsGatherer(selection_area, left, output, current_node->left, (axis + 1) % DimensionsCount);
 		if (current_node->right && selection_area.Overlap(right))
 			SelectedPointsGatherer(selection_area, right, output, current_node->right, (axis + 1) % DimensionsCount);
@@ -300,7 +300,7 @@ namespace nostd
 	}
 
 	template<size_t DimensionsCount>
-	void KDTree<DimensionsCount>::DestroyTree(Node *node)
+	void KDTree<DimensionsCount>::DestroyTree(Node* node)
 	{
 		if (node->left) DestroyTree(node->left);
 		if (node->right) DestroyTree(node->right);
