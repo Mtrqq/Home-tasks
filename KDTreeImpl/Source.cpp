@@ -12,9 +12,9 @@ int main()
 {
 	std::uniform_real_distribution<> u_id(0.0, 100000.0);
 	std::mt19937 generator{ std::random_device{}() };
-	std::vector<nostd::KDPoint<2>> points;
+	std::vector<nostd::KDPoint<3>> points;
 	points.reserve(10'000'000);
-	std::vector<double> coordinates(2);
+	std::vector<double> coordinates(3);
 	for (int i = 0; i < 100; ++i)
 	{
 		std::generate(coordinates.begin(), coordinates.end(), [&] {return u_id(generator); });

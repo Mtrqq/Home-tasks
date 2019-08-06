@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-constexpr unsigned tested_dimmension = 2;
+constexpr unsigned tested_dimmension = 3;
 
 std::pair<double, nostd::KDPoint<tested_dimmension>> FindNearestTree(const nostd::KDTree<tested_dimmension> & tree, const nostd::KDPoint<tested_dimmension> & to_find);
 
