@@ -4,7 +4,7 @@
 
 void ScopedConnection::Disconnect()
 {
-	EventManager::GetInstance().RemoveObserver(mp_subject, mp_observer, m_subtopic);
+	EventManager::GetInstance().DisconnectObserver(mp_subject, mp_observer, m_subtopic);
 }
 
 bool ScopedConnection::IsConnected() const

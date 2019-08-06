@@ -10,7 +10,7 @@ public:
 	virtual void OnEvent(const Event &i_event) = 0;
 	virtual ~IObserver()
 	{
-		EventManager::GetInstance().RemoveObserver(this);
+		EventManager::GetInstance().DisconnectObserver(this);
 	}
 };
 
