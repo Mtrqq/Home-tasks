@@ -34,8 +34,18 @@ TEST(EManagerTest, Should_Not_Throw_After_Slot_Deletion)
 {
 	Subject sub;
 	MockedObserver* mockobs = new MockedObserver;
-	EventManager::GetInstance().ScopedConnectObserver(&sub, mockobs, "example");
+	EventManager::GetInstance().ConnectObserver(&sub, mockobs, "example");
+	delete mockobs;
 	EXPECT_NO_THROW(sub.Notify(Event{}, "example"));
+}
+
+TEST(EManagerTest, Should_Not_Notify_After_Scoped_Connection_Destructed)
+{
+	Subject sub;
+	MockedObserver mockobs;
+	EventManager::GetInstance().ScopedConnectObserver(&sub, &mockobs, "example");
+	EXPECT_CALL(mockobs, OnEvent(testing::_)).Times(0);
+	sub.Notify(Event{}, "example");
 }
 
 TEST(EManagerTest, Should_Work_With_Multiple_Signals_Slots)
