@@ -43,7 +43,9 @@ TEST(EManagerTest, Should_Not_Notify_After_Scoped_Connection_Destructed)
 {
 	Subject sub;
 	MockedObserver mockobs;
-	EventManager::GetInstance().ScopedConnectObserver(&sub, &mockobs, "example");
+	{
+		auto connection = EventManager::GetInstance().ScopedConnectObserver(&sub, &mockobs, "example");
+	}
 	EXPECT_CALL(mockobs, OnEvent(testing::_)).Times(0);
 	sub.Notify(Event{}, "example");
 }
