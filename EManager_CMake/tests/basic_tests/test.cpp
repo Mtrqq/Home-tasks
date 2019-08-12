@@ -1,0 +1,64 @@
+
+#include <EManager/EventManager.h>
+#include <EManager/Subject.h>
+#include <EManager/Observer.h>
+#include <EManager/Event.h>
+
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+class MockedObserver : public IObserver
+{
+public:
+	MOCK_METHOD1(OnEvent, void(const Event&));
+};
+
+TEST(EManagerTest, Should_Work_With_One_Observer)
+{
+	Subject sub;
+	MockedObserver mockobs;
+	auto connection = EventManager::GetInstance().ScopedConnectObserver(&sub, &mockobs, "example");
+	EXPECT_CALL(mockobs, OnEvent(testing::_)).Times(1);
+	sub.Notify(Event{}, "example");
+}
+
+TEST(EManagerTest, Should_Not_Throw_After_Slot_Deletion)
+{
+	Subject sub;
+	MockedObserver* mockobs = new MockedObserver;
+	EventManager::GetInstance().ConnectObserver(&sub, mockobs, "example");
+	delete mockobs;
+	EXPECT_NO_THROW(sub.Notify(Event{}, "example"));
+}
+
+TEST(EManagerTest, Should_Not_Notify_After_Scoped_Connection_Destructed)
+{
+	Subject sub;
+	MockedObserver mockobs;
+	{
+		auto connection = EventManager::GetInstance().ScopedConnectObserver(&sub, &mockobs, "example");
+	}
+	EXPECT_CALL(mockobs, OnEvent(testing::_)).Times(0);
+	sub.Notify(Event{}, "example");
+}
+
+TEST(EManagerTest, Should_Work_With_Multiple_Signals_Slots)
+{
+	Subject sub1;
+	Subject sub2;
+	MockedObserver* obs1 = new MockedObserver;
+	MockedObserver obs2;
+	MockedObserver obs3;
+	auto& manager = EventManager::GetInstance();
+	manager.ConnectObserver(&sub1, obs1, "topic");
+	manager.ConnectObserver(&sub1, &obs2, "topic");
+	manager.ConnectObserver(&sub1, &obs3, "random");
+	manager.ConnectObserver(&sub2, obs1, "topic");
+	manager.ConnectObserver(&sub2, &obs3, "random");
+	EXPECT_CALL(*obs1, OnEvent(testing::_)).Times(2);
+	EXPECT_CALL(obs2, OnEvent(testing::_)).Times(1);
+	EXPECT_CALL(obs3, OnEvent(testing::_)).Times(1);
+	sub1.Notify(Event{}, "topic");
+	sub2.Notify(Event{}, "topic");
+	sub2.Notify(Event{}, "random");
+}

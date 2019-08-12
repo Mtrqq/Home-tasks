@@ -1,0 +1,5 @@
+C:/Users/Antoshik/source/repos/HomeTasks/EManager_CMake/lib/CMake_DLL/build/src/EManagerLibrary.dir/MinSizeRel/Event.obj
+C:/Users/Antoshik/source/repos/HomeTasks/EManager_CMake/lib/CMake_DLL/build/src/EManagerLibrary.dir/MinSizeRel/EventManager.obj
+C:/Users/Antoshik/source/repos/HomeTasks/EManager_CMake/lib/CMake_DLL/build/src/EManagerLibrary.dir/MinSizeRel/Observer.obj
+C:/Users/Antoshik/source/repos/HomeTasks/EManager_CMake/lib/CMake_DLL/build/src/EManagerLibrary.dir/MinSizeRel/ScopedConnection.obj
+C:/Users/Antoshik/source/repos/HomeTasks/EManager_CMake/lib/CMake_DLL/build/src/EManagerLibrary.dir/MinSizeRel/Subject.obj

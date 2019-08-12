@@ -25,7 +25,7 @@ TEST(AbstractFabricTest, Should_Work_With_Simple_Case) {
 TEST(AbstractFabricTest, Should_Be_Unregistered_After_Scoped_Connection_Destruction)
 {
 	{
-		auto connection = factory.ScopedRegister<AbstractClass, OverrideClass>();
+		auto short_time_connection = factory.ScopedRegister<AbstractClass, OverrideClass>();
 	}
 	EXPECT_EQ(false, factory.IsRegistered<AbstractClass>());
 }
