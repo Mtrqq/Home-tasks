@@ -1,3 +1,5 @@
 add_subdirectory(EManagerLibrary)
 
+set (EMANAGER_INCLUDE_PATHS ${EMANAGER_INCLUDE_PATHS} PARENT_SCOPE)
+
 

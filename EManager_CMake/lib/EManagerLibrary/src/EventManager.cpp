@@ -6,6 +6,12 @@
 
 #include <algorithm>
 
+EventManager& EventManager::GetInstance()
+{
+	static EventManager instance;
+	return instance;
+}
+
 void EventManager::ConnectObserver(const ISubject* ip_subject, IObserver* ip_observer, const std::string& i_subtopic)
 {
 	m_signal_map[ip_subject->GetUniqueIdentifier()][i_subtopic].push_back(ip_observer);

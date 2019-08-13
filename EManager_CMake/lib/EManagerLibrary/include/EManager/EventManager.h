@@ -18,11 +18,8 @@ class EventManager
 public:
 	EventManager(const EventManager&) = delete;
 	EventManager& operator=(const EventManager&) = delete;
-	static EventManager& GetInstance()
-	{
-		static EventManager instance;
-		return instance;
-	}
+	
+	static EventManager& GetInstance();
 
 	void ConnectObserver(const ISubject* ip_subject, IObserver* ip_observer, const std::string& i_subtopic);
 	ScopedConnection ScopedConnectObserver(const ISubject* ip_subject, IObserver* ip_observer,const std::string &i_subtopic);
