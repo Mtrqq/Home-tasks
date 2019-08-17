@@ -30,10 +30,6 @@ MThreadPool::~MThreadPool()
 {
 	Log("Started thread pool destruction !");
 
-	std::mutex execution_finaliser;
-	std::unique_lock<std::mutex> final_lock{ execution_finaliser };
-	m_finish_indicator.wait(final_lock, [this] {return m_active_threads_count == 0; });
-
 	std::unique_lock<std::mutex> lock{ m_queue_mutex };
 	m_stop_flag = true;
 	lock.unlock();
@@ -45,6 +41,15 @@ MThreadPool::~MThreadPool()
 
 	Log("Threads destructed.");
 }
+
+void MThreadPool::Wait(int msec_wait_interval)
+{
+	while (m_active_threads_count && !m_available_tasks.empty())
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds{ msec_wait_interval });
+	}
+}
+
 
 void MThreadPool::RunExecution()
 {

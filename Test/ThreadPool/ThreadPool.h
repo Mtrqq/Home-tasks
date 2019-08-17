@@ -17,6 +17,8 @@ public:
 	template <typename Function, typename ...Args>
 	std::future<typename std::result_of<Function(Args...)>::type>
 	Execute(Function function, Args && ... arguments);
+
+	void Wait(int msec_wait_interval = 50);
 private:
 	std::vector<std::thread> m_threads;
 	std::queue<std::function<void()>> m_available_tasks;
